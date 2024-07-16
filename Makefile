@@ -21,6 +21,10 @@ CFLAGS := $(INC_FLAGS) -Wall -Wextra
 # make all will also run the compiledb and ctags commands
 all: post_build
 
+# this is the one that I'll run as part of my automated checking workflow
+check: $(TARGET_EXEC)
+	$(info This is where I'll add some checks like unit tests but I haven't yet)
+
 # The final build step.
 $(TARGET_EXEC): build_dir $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
