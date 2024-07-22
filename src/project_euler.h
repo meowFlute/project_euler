@@ -1,6 +1,7 @@
 #ifndef _PROJECT_EULER
 #define _PROJECT_EULER
 
-void hello_project_euler_world(void);
+#include "problems/problem_001.h"
+#include "problems/problem_002.h"
 
 #endif // _PROJECT_EULER

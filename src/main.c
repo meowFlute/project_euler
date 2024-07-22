@@ -1,11 +1,12 @@
 #include "project_euler.h"
-#include "problem_001.h"
 
 int main(int argc, char * argv[])
 {
-    hello_project_euler_world();
-
+    //TODO: Add the ability to take command line inputs to execute specific
+    //problems with error handline to report when a problem has not yet been
+    //completed. Make the default case of no arguments execute all problems
     problem_001();
+    problem_002();
 
     return 0;
 }

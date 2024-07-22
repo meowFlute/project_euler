@@ -3,14 +3,17 @@ CC=gcc
 TARGET_EXEC=project_euler
 BUILD_DIR=./build
 SRC_DIR=./src
-INC_DIRS := $(SRC_DIR)
+INC_DIRS := $(SRC_DIR) $(SRC_DIR)/problems
 #LDFLAGS := -lm
 
 # Find all the files we want to compile, without folder names
-SRCS := $(wildcard $(SRC_DIR)/*.c)
+BASE_SRCS := $(wildcard $(SRC_DIR)/*.c) 
+PROBLEM_SRCS := $(wildcard $(SRC_DIR)/problems/*.c)
 
 # Generate Build Folder Targets
-OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+BASE_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(BASE_SRCS))
+PROBLEM_OBJS := $(patsubst $(SRC_DIR)/problems/%.c,$(BUILD_DIR)/problems/%.o,$(PROBLEM_SRCS))
+OBJS := $(BASE_OBJS) $(PROBLEM_OBJS)
 
 # Add a prefix to INC_DIRS
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
@@ -31,9 +34,13 @@ $(TARGET_EXEC): build_dir $(OBJS)
 
 build_dir:
 	mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)/problems
 
 # Build step for all source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/problems/%.o: $(SRC_DIR)/problems/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Post-build running of ctags and compiledb
