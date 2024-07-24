@@ -17,7 +17,7 @@
  *
  * Find the largest palindrome made from the product of two 3-digit numbers.
  * */
-void problem_003()
+void problem_004()
 {
     // initialize my gmp variables as described in the gmp docs
     mpz_t num1, num2, prod, test;
@@ -78,7 +78,7 @@ void problem_003()
 
     // print the solution using the Z type defined for gmp_printf
     gmp_printf("The largest palindrome made from the product of two 3-digit \
-            numbers is: %Zd", prod);
+numbers is: %Zd\n", prod);
 
     // make sure to clear all the gmp variables
     mpz_clears(num1, num2, prod, test, NULL);
