@@ -4,7 +4,7 @@ TARGET_EXEC=project_euler
 BUILD_DIR=./build
 SRC_DIR=./src
 INC_DIRS := $(SRC_DIR) $(SRC_DIR)/problems
-#LDFLAGS := -lm
+LDFLAGS := -lgmp
 
 # Find all the files we want to compile, without folder names
 BASE_SRCS := $(wildcard $(SRC_DIR)/*.c) 
@@ -19,7 +19,7 @@ OBJS := $(BASE_OBJS) $(PROBLEM_OBJS)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 # Compiler flags
-CFLAGS := $(INC_FLAGS) -Wall -Wextra
+CFLAGS := $(INC_FLAGS) -Wall -Wextra -g
 
 # make all will also run the compiledb and ctags commands
 all: post_build
