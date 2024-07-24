@@ -14,6 +14,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install GMP
+      run: |
+        wget -v https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
+        tar -xf gmp-6.3.0.tar.xz
+        cd gmp-6.3.0/
+        ./configure
+        make
+        sudo make install
+        cd ..
+
     - name: Clean
       run: make clean
 
