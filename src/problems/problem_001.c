@@ -18,7 +18,7 @@ void problem_001(void)
 #define MAX_NUM 1000
     int list[NUM_IN_LIST] = { 3, 5 };
 
-    printf("The answer to problem 001 is %d!\n", 
+    printf("Problem 001: Sum of all multiples of 3 or 5 below 1000: %d\n", 
             sum_of_natural_multiples_below_value(NUM_IN_LIST, list, MAX_NUM));
 }
 

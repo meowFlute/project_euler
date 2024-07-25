@@ -30,5 +30,6 @@ void problem_002()
         if(nums[i%3]%2 == 0) // even case
             sum += nums[i%3];// add it to the sum
     }
-    printf("The answer to problem 002 is: %d\n", sum);
+    printf("Problem 002: Sum of even Fibonacci numbers under 4,000,000: %d\n",
+            sum);
 }
