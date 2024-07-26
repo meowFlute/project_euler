@@ -6118,6 +6118,6 @@ void problem_003()
             answer = factors[i];
     }
 
-    printf("Problem 003: The largest prime factor of %lu is %lu\n", 
+    printf("Problem 003: Largest prime factor of %lu: %lu\n", 
             big_num, answer);
 }
