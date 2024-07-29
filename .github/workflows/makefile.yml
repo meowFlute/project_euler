@@ -25,7 +25,7 @@ jobs:
         cd ..
 
     - name: Install libprimesieve
-    - run: sudo apt install libprimesieve-dev
+      run: sudo apt install libprimesieve-dev
 
     - name: Clean
       run: make clean
