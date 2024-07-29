@@ -10,6 +10,8 @@ int main(int argc, char * argv[])
     problem_003();
     problem_004();
     problem_005();
+    problem_006();
+    problem_007();
 
     return 0;
 }

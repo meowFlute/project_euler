@@ -6,5 +6,7 @@
 #include "problems/problem_003.h"
 #include "problems/problem_004.h"
 #include "problems/problem_005.h"
+#include "problems/problem_006.h"
+#include "problems/problem_007.h"
 
 #endif // _PROJECT_EULER
