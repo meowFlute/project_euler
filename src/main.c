@@ -12,6 +12,7 @@ int main(int argc, char * argv[])
     problem_005();
     problem_006();
     problem_007();
+    problem_008();
 
     return 0;
 }
