@@ -11,7 +11,7 @@
 
 #define MAIN_VERSION                1
 #define HIGHEST_PROBLEM_COMPLETED   9
-#define SUB_VERSION                 1
+#define SUB_VERSION                 0
 
 // macros to make DEF2STR(HIGHEST_PROBLEM_COMPLETED) = "8" (or whatever number)
 // used below to make it so argp_program_version 
