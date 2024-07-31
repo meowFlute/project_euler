@@ -3,8 +3,18 @@
 ## What is this repo?
 Solving the problems at https://projecteuler.net/ for fun. I'll do it in C and/or Fortran and use it as an excuse to do some things in CUDA and OpenCL because that is part of the fun.
 
+### Solving New Problems
+I added an automation script in the src directory that will work in most linux environments. It is a simple shell script with usage and help documentation baked in, but the gist of it is you just run it with a problem number that is one larger than the `HIGHEST_PROBLEM_COMPLETED` parameter in main.c
+
+So for example, to create the files for problem 9 and add the function pointers and references to the new header file into the right places, all I had to do was run `./add_problem.sh -p 9` from the src/ directory. This did four main things:
+1. Created a problem_009.h file and filled it with the right info according to the naming standards I've been following
+2. Created a problem_009.c file and filled it with enough to run -- references the header, implements the function, etc.
+3. Adds the header to project_euler.h
+4. Adds the function pointer to main.c and increments the `HIGHEST_PROBLEM_COMPLETED` parameter while also setting the `SUB_VERSION` parameter to `0`
+
+Takes some of the tedium out of working on a new problem
+
 ### TODO LIST
-- Make a script that automates adding new problems. something like `./addproblem 72` and it will go in and edit/create all of the files appropriately so that I don't have to do repetitive tasks.
 - Add in some kind of unit testing suite that checks against the example problems given in most questions as well as the solutions
 
 ## Current Build Status
