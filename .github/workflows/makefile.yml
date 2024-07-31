@@ -15,14 +15,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install GMP
-      run: |
-        wget -v https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
-        tar -xf gmp-6.3.0.tar.xz
-        cd gmp-6.3.0/
-        ./configure
-        make
-        sudo make install
-        cd ..
+      run: sudo apt install libgmp-dev
 
     - name: Install libprimesieve
       run: sudo apt install libprimesieve-dev
