@@ -19,16 +19,7 @@ I'm not sure if this will come up, but I do link against the libc math library `
 #### GNU Multi Precision Library (GMP)
 At the time of writing I'm using GMP 6.3.0 for some of the problems. This was more out of curiosity than need, and I used a few problems to learn about GMP syntax and practice using the library. 
 
-I suggest following the [install instructions in the GMP documentation](https://gmplib.org/manual/Installing-GMP), but I am installing [during my build workflow](https://github.com/meowFlute/project_euler/blob/main/.github/workflows/makefile.yml). The flow there is something like this:
-
-```console
-wget -v https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
-tar -xf gmp-6.3.0.tar.xz
-cd gmp-6.3.0/
-./configure
-make
-sudo make install
-```
+I suggest following the [install instructions in the GMP documentation](https://gmplib.org/manual/Installing-GMP), but I am installing [during my build workflow](https://github.com/meowFlute/project_euler/blob/main/.github/workflows/makefile.yml). Because my build flow runs on an ubuntu machine I'm leveraging the libgmp-dev apt package by installing with `sudo apt install libgmp-dev`
 
 #### primesieve
 [primesieve](https://github.com/kimwalisch/primesieve) is a library by Kim Walisch that is [distributed through a ton of package managers](https://github.com/kimwalisch/primesieve). In my case I get it with a simple `sudo apt install libprimesieve-dev` during [my build workflow](https://github.com/meowFlute/project_euler/blob/main/.github/workflows/makefile.yml).
