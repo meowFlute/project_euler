@@ -17,6 +17,7 @@ Takes some of the tedium out of working on a new problem
 ### TODO LIST
 - Add in some kind of unit testing suite that checks against the example problems given in most questions as well as the solutions
 - Add an option to be able to time the execution of each problem run
+- Add options for different kinds of output (natural language, tabulated, numeric only responses, etc.)
 
 ## Current Build Status
 Every commit triggers an automatic workflow on an ubuntu machine remotely.
