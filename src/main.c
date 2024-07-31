@@ -10,8 +10,8 @@
 #include "project_euler.h"
 
 #define MAIN_VERSION                1
-#define HIGHEST_PROBLEM_COMPLETED   9
-#define SUB_VERSION                 0
+#define HIGHEST_PROBLEM_COMPLETED   10
+#define SUB_VERSION                 1
 
 // macros to make DEF2STR(HIGHEST_PROBLEM_COMPLETED) = "8" (or whatever number)
 // used below to make it so argp_program_version 
@@ -32,7 +32,8 @@ void (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (void) = {
     problem_006,
     problem_007,
     problem_008,
-    problem_009
+    problem_009,
+    problem_010
 };
 
 /* argp globals */
