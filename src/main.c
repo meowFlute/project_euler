@@ -10,7 +10,7 @@
 #include "project_euler.h"
 
 #define MAIN_VERSION                1
-#define HIGHEST_PROBLEM_COMPLETED   8
+#define HIGHEST_PROBLEM_COMPLETED   9
 #define SUB_VERSION                 1
 
 // macros to make DEF2STR(HIGHEST_PROBLEM_COMPLETED) = "8" (or whatever number)
@@ -20,6 +20,7 @@
 
 /* array of problem run flags */
 _Bool problems[HIGHEST_PROBLEM_COMPLETED] = {false,};
+_Bool argument_encountered = false;
 
 /* array of problem function pointers */
 void (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (void) = {
@@ -30,7 +31,8 @@ void (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (void) = {
     problem_005,
     problem_006,
     problem_007,
-    problem_008
+    problem_008,
+    problem_009
 };
 
 /* argp globals */
@@ -62,12 +64,16 @@ static struct argp parser = { options, project_euler_parser, 0, doc, 0, 0, 0 };
 static error_t project_euler_parser(int key, char * arg, 
         struct argp_state * state)
 {
-    if(key == ARGP_KEY_NO_ARGS) // no arguments passed
+    if(key == ARGP_KEY_END)
     {
-        argp_error(state, "at least one argument is required");
+        if(!argument_encountered)
+        {
+            argp_error(state, "at least one argument is required");
+        }
     }
     if(key == 'a')
     {
+        argument_encountered = true;
         int i;
         for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
         {
@@ -76,6 +82,7 @@ static error_t project_euler_parser(int key, char * arg,
     }
     if(key == 'p')
     {
+        argument_encountered = true;
         char * arg_copy = strdup(arg);
         if(arg_copy == NULL)
             error(EXIT_FAILURE, errno, "arg_copy malloc failed");

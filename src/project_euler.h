@@ -9,5 +9,6 @@
 #include "problems/problem_006.h"
 #include "problems/problem_007.h"
 #include "problems/problem_008.h"
+#include "problems/problem_009.h"
 
 #endif // _PROJECT_EULER
