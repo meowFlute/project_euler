@@ -21,7 +21,7 @@ jobs:
       run: sudo apt install libprimesieve-dev
 
     - name: Clean
-      run: make clean
+      run: make minimal
 
     - name: Run make without the ctags generation and stuff
       run: make check
