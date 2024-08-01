@@ -76,12 +76,12 @@ static error_t project_euler_parser(int key, char * arg,
     {
         if(!argument_encountered)
         {
-            argp_error(state, "at least one argument is required");
+            argp_error(state, "at least one argument is required "
+                    "(-t,--time doesn't count)");
         }
     }
     if(key == 't')
     {
-        argument_encountered = true;
         report_time = true;
     }
     if(key == 'a')
