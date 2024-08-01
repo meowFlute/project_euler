@@ -10,7 +10,7 @@
 #include "project_euler.h"
 
 #define MAIN_VERSION                1
-#define HIGHEST_PROBLEM_COMPLETED   10
+#define HIGHEST_PROBLEM_COMPLETED   11
 #define SUB_VERSION                 1
 
 // macros to make DEF2STR(HIGHEST_PROBLEM_COMPLETED) = "8" (or whatever number)
@@ -33,7 +33,8 @@ void (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (void) = {
     problem_007,
     problem_008,
     problem_009,
-    problem_010
+    problem_010,
+    problem_011
 };
 
 /* argp globals */

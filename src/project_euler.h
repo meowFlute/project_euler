@@ -11,5 +11,6 @@
 #include "problems/problem_008.h"
 #include "problems/problem_009.h"
 #include "problems/problem_010.h"
+#include "problems/problem_011.h"
 
 #endif // _PROJECT_EULER
