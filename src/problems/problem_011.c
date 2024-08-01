@@ -140,5 +140,5 @@ void problem_011()
     }
 
     printf("Problem 011: The largest product of 4 adjacent terms (crossword "
-            "style): %" PRIu32, largest_product);
+            "style): %" PRIu32 "\n", largest_product);
 }
