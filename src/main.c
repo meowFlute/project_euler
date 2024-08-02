@@ -133,17 +133,22 @@ int main(int argc, char * argv[])
 
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
     {
-        if(report_time)
-            cpu_time_start= clock();
         if(problems[i])
-            problem_func_ptrs[i](); 
-        if(report_time)
         {
-            cpu_time_end = clock();
-            cpu_time_used = 1000.0*((double) (cpu_time_end - cpu_time_start)) /
-                                    CLOCKS_PER_SEC;
-            printf("Problem %03d Timing: %.8fms\n", i+1, cpu_time_used);
+            if(report_time)
+            {
+                cpu_time_start= clock();
+            }
+            problem_func_ptrs[i](); 
+            if(report_time)
+            {
+                cpu_time_end = clock();
+                cpu_time_used = 1000.0*((double) (cpu_time_end-cpu_time_start)) 
+                                    / CLOCKS_PER_SEC;
+                printf("Problem %03d Timing: %.8fms\n", i+1, cpu_time_used);
+            }
         }
+        
     }
 
     return 0;
