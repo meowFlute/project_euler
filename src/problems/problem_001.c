@@ -1,7 +1,10 @@
 #include "problem_001.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
 
-/* TODO: come back and make this use large unsigned stuff to make it robust */
 int sum_of_natural_multiples_below_value(int num_list, int* list, int value);
 
 /* PROBLEM STATEMENT: https://projecteuler.net/problem=1
@@ -12,14 +15,60 @@ int sum_of_natural_multiples_below_value(int num_list, int* list, int value);
  * Find the sum of all the multiples of 3 or 5 below 1000.
  * 
  * */
-void problem_001(void)
+int problem_001(problem_solution * ps)
 {
-#define NUM_IN_LIST 2
-#define MAX_NUM 1000
-    int list[NUM_IN_LIST] = { 3, 5 };
+    clock_t start, end; 
+    double cpu_time_used_ms;
+    /* problem number */
+    ps->problem_number = 1U;
+    /* problem statement */
+    ps->problem_statement = strdup("If we list all the natural numbers below 10"
+            " that are multiples of 3 or 5, we get 3, 5, 6, and 9. "
+            "The sum of these multiples is 23.\n"
+            "\n"
+            "Find the sume of all the multiples of 3 or 5 below 1000.");
 
-    printf("Problem 001: Sum of all multiples of 3 or 5 below 1000: %d\n", 
-            sum_of_natural_multiples_below_value(NUM_IN_LIST, list, MAX_NUM));
+    start = clock();
+    const int max_num = 1000;
+    int list[2] = { 3, 5 };
+    int solution = sum_of_natural_multiples_below_value(
+            (sizeof list) / sizeof(int) , list, max_num);
+    end = clock();
+    cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
+    ps->execution_time_ms = cpu_time_used_ms;
+
+    /* Buffer length requirements:
+     * if we added the number 1000 1000 times, it would be 1000x1000=1000000
+     * which is 7 digits. This far exceeds the upper bound of our sum. The
+     * natural language string below is 57 characters, so 64 bytes would be an
+     * upper limit to our required space. 
+     *
+     * With a safety factor, we make it 100 bytes */
+    char buf[100];
+    int ret;
+    
+    /* natural language solution */
+    ret = snprintf(buf, sizeof buf, 
+            "The sum of all multiples of 3 or 5 below 1000 is %d",
+            solution);
+    if((ret == sizeof buf) || (ret < 0))
+    {
+        perror("project_euler: Problem 001:");
+        printf("Error: Problem 001: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->natural_language_solution = strdup(buf);
+
+    /* numeric string solution */
+    ret = snprintf(buf, sizeof buf, "%d",solution);
+    if((ret == sizeof buf) || (ret < 0))
+    {
+        perror("project_euler: Problem 001:");
+        printf("Error: Problem 001: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->numerical_solution = strdup(buf);
+    return EXIT_SUCCESS;
 }
 
 int sum_of_natural_multiples_below_value(int num_list, int* list, int value)

@@ -10,7 +10,7 @@
 /* LOCAL HEADER FILES */
 #include "project_euler.h"
 
-#define MAIN_VERSION                1
+#define MAIN_VERSION                2
 #define HIGHEST_PROBLEM_COMPLETED   11
 #define SUB_VERSION                 1
 
@@ -23,11 +23,15 @@
 _Bool problems[HIGHEST_PROBLEM_COMPLETED] = {false,};
 _Bool argument_encountered = false;
 _Bool report_time = false;
+_Bool numeric = true; //true by default, option sets false
+_Bool natural_language = false;
+_Bool problem_statements = false;
+_Bool tabulated = false;
 clock_t cpu_time_start, cpu_time_end;
 double cpu_time_used;
 
 /* array of problem function pointers */
-void (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (void) = {
+int (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (problem_solution * ps) = {
     problem_001,
     problem_002,
     problem_003,
@@ -40,6 +44,8 @@ void (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (void) = {
     problem_010,
     problem_011
 };
+
+problem_solution solution_arr[HIGHEST_PROBLEM_COMPLETED];
 
 /* argp globals */
 const char * argp_program_version = "project_euler version "
@@ -64,6 +70,14 @@ static struct argp_option options[] = {
             "run all of the problems", 0},
         {"time", 't', 0, 0,
             "track and report CPU time of each problem solution", 0},
+        {"no_numeric_only", 'n', 0, 0,
+            "report only numbers for solutions", 0},
+        {"tabulated", 'z', 0, 0,
+            "report solutions in a table", 0},
+        {"problem_statements", 's', 0, 0,
+            "include problem statements in the results", 0},
+        {"natural_language", 'x', 0, 0,
+            "report full-length text solutions in natural language", 0},
         { 0 }
     };
 
@@ -80,10 +94,16 @@ static error_t project_euler_parser(int key, char * arg,
                     "(-t,--time doesn't count)");
         }
     }
+    if(key == 'n')
+        numeric = false;
+    if(key == 's')
+        problem_statements = true;
+    if(key == 'x')
+        natural_language = true;
+    if(key == 'z')
+        tabulated = true;
     if(key == 't')
-    {
         report_time = true;
-    }
     if(key == 'a')
     {
         argument_encountered = true;
@@ -106,9 +126,9 @@ static error_t project_euler_parser(int key, char * arg,
         while(ptr != NULL)
         {
             int sub_arg = atoi(ptr);
-            sub_arg--; // the array of flags is indexed to zero for problem 1
             if(sub_arg > 0)
             {
+                sub_arg--; // the array of flags is indexed to zero for problem 1
                 problems[sub_arg] = true;
             }
             else // zero means an error
@@ -124,32 +144,90 @@ static error_t project_euler_parser(int key, char * arg,
     return 0;
 }
 
-int main(int argc, char * argv[])
+int report_results(void)
 {
     int i;
+    /* we need to handle a few potential output styles:
+     *      - tabulated:
+     *          > possible columns: 
+     *              1) problem number
+     *              2) problem statements (optional)
+     *              3) natural language problem solutions (optional)
+     *              4) numeric only problem solutions (default optional)
+     *              5) execution time (optional)
+     *      - non-tabulated:
+     *          > possible reported lines:
+     *              same 5 as above
+     */
 
-    /* Run the above arg parser */
+    /* tabulated output */
+    if(tabulated)
+    {
+        printf("Tabulated results not implemented yet -- do it!\n");
+    }
+    else /* non-tabulated output */
+    {
+        for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
+        {
+            if(problems[i])
+            {
+                printf("Problem %03u:\n", solution_arr[i].problem_number);
+                if(problem_statements)
+                    printf("Problem Statement: %s\n", 
+                            solution_arr[i].problem_statement);
+                if(numeric)
+                    printf("Numeric Solution: %s\n",
+                            solution_arr[i].numerical_solution);
+                if(natural_language)
+                    printf("Natural Language Solution: %s\n",
+                            solution_arr[i].natural_language_solution);
+                if(report_time)
+                    printf("Execution Time: %.3f milliseconds\n", 
+                            solution_arr[i].execution_time_ms);
+            }
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int main(int argc, char * argv[])
+{
+    int i, ret; // max < 1,000: int is sufficiently large
+
+    /* Run the arg parser to handle user input / program options */
     argp_parse(&parser, argc, argv, 0, 0, 0);
 
+    /* run each problem indicated by program options */
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
     {
         if(problems[i])
         {
-            if(report_time)
+            ret = problem_func_ptrs[i](&solution_arr[i]); 
+            if(ret == EXIT_FAILURE)
             {
-                cpu_time_start= clock();
+                printf("ERROR: problem %d returned EXIT_FAILURE\n", i);
+                return EXIT_FAILURE;
             }
-            problem_func_ptrs[i](); 
-            if(report_time)
-            {
-                cpu_time_end = clock();
-                cpu_time_used = 1000.0*((double) (cpu_time_end-cpu_time_start)) 
-                                    / CLOCKS_PER_SEC;
-                printf("Problem %03d Timing: %.8fms\n", i+1, cpu_time_used);
-            }
-        }
-        
+        }        
+    } 
+
+    /* report results according to program options */
+    ret = report_results();
+    if(ret == EXIT_FAILURE)
+    {
+        printf("ERROR: report_results() returned EXIT_FAILURE\n");
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    /* free the strings allocated to the heap by each problem run */
+    for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
+    {
+        if(problems[i])
+        {
+            free_problem_solution_strings(&solution_arr[i]);
+        }
+    }
+
+    return EXIT_SUCCESS;
 }
