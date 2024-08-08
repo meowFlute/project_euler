@@ -6,6 +6,11 @@
 #include <errno.h>      // errno
 #include <error.h>      // error
 #include <time.h>       // cpu timing
+#include <math.h>       // log
+#ifdef __linux__
+#include <sys/ioctl.h>  // ioctl
+#include <unistd.h>     // STDOUT_FILENO
+#endif
 
 /* LOCAL HEADER FILES */
 #include "project_euler.h"
@@ -25,7 +30,7 @@ _Bool argument_encountered = false;
 _Bool report_time = false;
 _Bool numeric = true; //true by default, option sets false
 _Bool natural_language = false;
-_Bool problem_statements = false;
+_Bool problem_statement = false;
 _Bool tabulated = false;
 clock_t cpu_time_start, cpu_time_end;
 double cpu_time_used;
@@ -74,7 +79,7 @@ static struct argp_option options[] = {
             "report only numbers for solutions", 0},
         {"tabulated", 'z', 0, 0,
             "report solutions in a table", 0},
-        {"problem_statements", 's', 0, 0,
+        {"problem_statement", 's', 0, 0,
             "include problem statements in the results", 0},
         {"natural_language", 'x', 0, 0,
             "report full-length text solutions in natural language", 0},
@@ -97,7 +102,7 @@ static error_t project_euler_parser(int key, char * arg,
     if(key == 'n')
         numeric = false;
     if(key == 's')
-        problem_statements = true;
+        problem_statement = true;
     if(key == 'x')
         natural_language = true;
     if(key == 'z')
@@ -144,6 +149,114 @@ static error_t project_euler_parser(int key, char * arg,
     return 0;
 }
 
+typedef struct tabulated_widths{
+    unsigned short total;
+    unsigned short problem_num;
+    unsigned short exe_time_width;
+    unsigned short exe_time_precision;
+    unsigned short numerical_solution;
+    unsigned short problem_statement;
+    unsigned short natural_language;
+} tabulated_widths;
+
+void print_width(int width, char c)
+{
+    int i;
+    for(i = 0; i < width; i++)
+    {
+        putchar(c);
+    }
+    putchar('\n');
+}
+
+int report_results_tabulated_single_line(tabulated_widths tw)
+{
+    /* There are two cases where we'd want to do this:
+     *  1) not a tty
+     *  2) not a wide enough tty
+     * In those cases, we'll simply assume infinite width. We also assume all
+     * strings have no newline characters.
+     * */
+    int i;
+
+    // since we're reporting all of these on one line, we need to set the
+    // length of the strings that would normally be wrapped.
+    tw.natural_language = strlen("natural language solution");
+    tw.problem_statement = strlen("problem statement");
+    for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
+    {
+        if(problems[i])
+        {
+            unsigned short tmp_nat, tmp_prob;
+            tmp_nat = (unsigned short)strlen(solution_arr[i].natural_language_solution);
+            tmp_prob = (unsigned short)strlen(solution_arr[i].problem_statement);
+            
+            if(tmp_nat > tw.natural_language)
+                tw.natural_language = tmp_nat;
+            
+            if(tmp_prob > tw.problem_statement)
+                tw.problem_statement = tmp_prob;
+        }
+    }
+
+    tw.total = 0U;
+    printf("| %-*s ", tw.problem_num, "NUM");
+    tw.total += tw.problem_num + 3U;
+    if(report_time)
+    {
+        printf("| %-*s ", 
+                tw.exe_time_width + tw.exe_time_precision + 4U, "exe time");
+        tw.total += tw.exe_time_precision + tw.exe_time_width + 7U;
+    }
+    if(numeric)
+    {
+        printf("| %-*s ", tw.numerical_solution, "answer");
+        tw.total += tw.numerical_solution + 3U;
+    }
+    if(natural_language)
+    {
+        printf("| %-*s ", tw.natural_language, "natural language solution");
+        tw.total += tw.natural_language + 3U;
+    }
+    if(problem_statement)
+    {
+        printf("| %-*s ", tw.problem_statement, "problem statement");
+        tw.total += tw.problem_statement + 3U;
+    }
+    printf("|\n");
+    tw.total += 1U;
+
+    print_width(tw.total, '=');
+
+    for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
+    {
+        if(problems[i])
+        {
+            printf("| %0*u ", tw.problem_num, solution_arr[i].problem_number);
+            if(report_time)
+                printf("| %*.*f ms ", 
+                        tw.exe_time_width, 
+                        tw.exe_time_precision,
+                        solution_arr[i].execution_time_ms);
+            if(numeric)
+                printf("| %*s ", 
+                        tw.numerical_solution, 
+                        solution_arr[i].numerical_solution);
+            if(natural_language)
+                printf("| %-*s ", 
+                        tw.natural_language, 
+                        solution_arr[i].natural_language_solution);
+            if(problem_statement)
+                printf("| %-*s ", 
+                        tw.problem_statement, 
+                        solution_arr[i].problem_statement);
+            printf("|\n");
+            print_width(tw.total, '-');
+        }
+    }
+    return EXIT_SUCCESS;
+}
+
 int report_results(void)
 {
     int i;
@@ -163,7 +276,197 @@ int report_results(void)
     /* tabulated output */
     if(tabulated)
     {
-        printf("Tabulated results not implemented yet -- do it!\n");
+        /* I'm thinking we'll have to implement different methods of getting
+         * console width and tabulating the output. I'll start with linux and
+         * then see if I can add windows. A stretch goal would be to get a mac
+         * version to compile and test as a github action without ever
+         * owning a mac, but I don't really care if that happens
+         *
+         * We'll keep them separate with compiler macros so we don't get into
+         * too much trouble */
+
+        /* calculate column widths for all platforms */
+        /* We need to subdivide the max width by each field we're going to
+         * use. We'll do the single-line columns first to figure out how
+         * much width we have remaining */
+
+        tabulated_widths tw;
+        _Bool single_line_print = false;
+        unsigned short tmp_time_width, tmp_numerical_width;
+        tw.total = 0U;
+
+        /* fixed width columns:
+         *      - problem number
+         *      - time elapsed (optional) 
+         *      - numeric_only solution (optional, default)
+         * */ 
+        tw.problem_num = 3U;
+        tw.exe_time_precision = 6U;
+        tw.exe_time_width = 1U;
+        tw.numerical_solution = 6U; // "answer" is the min column width
+        for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
+        {
+            if(problems[i])
+            {
+                if(report_time)
+                {
+                    if(solution_arr[i].execution_time_ms > 1.0)
+                    {
+                        tmp_time_width = (unsigned short)floor(
+                                log10(solution_arr[i].execution_time_ms));
+                        if(tmp_time_width > tw.exe_time_width)
+                            tw.exe_time_width = tmp_time_width;
+                    }
+                }
+                else
+                {
+                    tw.exe_time_width = 0U;
+                    tw.exe_time_precision = 0U;
+                }
+
+                if(numeric) 
+                {
+                    tmp_numerical_width = (unsigned short)strnlen(
+                            solution_arr[i].numerical_solution, 
+                            PE_SOLUTION_BUFFER_LEN);
+                    if(tmp_numerical_width == PE_SOLUTION_BUFFER_LEN)
+                    {
+                        /* this is an error condition where '\0' was never
+                         * found in the string */
+                        printf("ERROR: problem %d numerical_solution string"
+                                " does not contain a null termination char"
+                                "\n", i);
+                        return EXIT_FAILURE;
+                    }
+                    else
+                    {
+                        if(tmp_numerical_width > tw.numerical_solution)
+                            tw.numerical_solution = tmp_numerical_width;
+                    }
+                }
+                else
+                {
+                    tw.numerical_solution = 0U;
+                }
+            }
+        }
+
+        /* calculate how much width we have left for the wrapped columns */
+        tw.total += tw.problem_num + 3U; // adding 3 for spaces and column
+        if(report_time)
+            tw.total += tw.exe_time_precision + tw.exe_time_width
+                + 6U; // adding 6 for spaces, decimal, "ms", and right '|'
+        if(numeric)
+            tw.total += tw.numerical_solution + 3U; // spaces, '|' 
+
+#if __linux__
+
+        /* w.ws_col contains the column width we need to know to keep
+         * formatting nice after we use ioctl to check the term */
+        if(isatty(STDOUT_FILENO))
+        {
+            /* STDOUT is a tty */
+            struct winsize w;
+
+            /* use ioctl(TIOCGWINSZ) to query rows and columns in tty */
+            ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+            // printf ("lines %d\n", w.ws_row);
+            // printf ("columns %d\n", w.ws_col);
+
+            // /* show off how perfectly we can measure it */
+            int row, col;
+            // for(row = 0; row < (w.ws_row - 4); row++)
+            // {
+            //     for(col = 0; col < w.ws_col; col++)
+            //     {
+            //         putchar('=');
+            //     }
+            //     putchar('\n');
+            // }
+
+            /* wrapped columns: 
+             *      - problem statement (optional) 
+             *      - natural language solution (optional) 
+             * */
+            if(problem_statement && natural_language)
+            {
+                // case with both
+                /* " statements | language |" is the min width */
+                const unsigned short min_width = 24U;
+                if((tw.total + min_width) > w.ws_col) // tty too narrow
+                    single_line_print = true;
+            }
+            else if(problem_statement)
+            {
+                // problem statement column only
+                /* " statements |" is the min width */
+                const unsigned short min_width = 13U;
+                if((tw.total + min_width) > w.ws_col) // tty too narrow
+                    single_line_print = true;
+            }
+            else if(natural_language)
+            {
+                // only natural language column
+                /* " language |" is min width */
+                const unsigned short min_width = 11U;
+                if((tw.total + min_width) > w.ws_col) // tty too narrow
+                    single_line_print = true;
+            }
+            else
+            {
+                // no wrapped columns
+                if((tw.total) > w.ws_col) // tty too narrow
+                    single_line_print = true;
+            }            
+
+            if(single_line_print)
+            {
+                // case where we don't care about wrapping and just print as if
+                // STDOUT is not a tty just like below
+                report_results_tabulated_single_line(tw);
+            }
+            else
+            {
+                // case where we want to build a nice looking table
+                // w.ws_col is a valid width we want to fill
+                for(col = 0; col < w.ws_col; col++)
+                {
+                    putchar('_');
+                }
+                putchar('\n');
+                printf("| NUM ");
+                if(report_time)
+                    printf("| exe time");
+            }
+        }
+        else // STDOUT is not a tty!
+        {
+            /* this false case happens more than you'd think. Some common
+             * examples:
+             *      - using "| grep", or other pipes
+             *      - routing to a file for storage, e.g. " > test.txt"
+             * */
+
+            /* we're going to assume an infinite max width, so the header width
+             * for each field needs to be set by the largest */
+           report_results_tabulated_single_line(tw); 
+        }
+#elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+        //define something for Windows (32-bit and 64-bit, this part is common)
+        printf("Windows tabulation not implemented yet, use non-tabulated "
+                "output\n");
+#elif __APPLE__
+    #include <TargetConditionals.h>
+    #if TARGET_OS_MAC
+        // Other kinds of Apple platforms
+        printf("Mac tabulation not implemented yet, use non-tabulated "
+                "output\n");
+    #else
+    #   error "Unsupported Apple platform"
+    #endif
+#else
+#   error "Unsupported compiler"
+#endif
     }
     else /* non-tabulated output */
     {
@@ -172,7 +475,7 @@ int report_results(void)
             if(problems[i])
             {
                 printf("Problem %03u:\n", solution_arr[i].problem_number);
-                if(problem_statements)
+                if(problem_statement)
                     printf("Problem Statement: %s\n", 
                             solution_arr[i].problem_statement);
                 if(numeric)

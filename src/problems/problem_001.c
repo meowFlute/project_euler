@@ -24,8 +24,7 @@ int problem_001(problem_solution * ps)
     /* problem statement */
     ps->problem_statement = strdup("If we list all the natural numbers below 10"
             " that are multiples of 3 or 5, we get 3, 5, 6, and 9. "
-            "The sum of these multiples is 23.\n"
-            "\n"
+            "The sum of these multiples is 23. "
             "Find the sume of all the multiples of 3 or 5 below 1000.");
 
     start = clock();
@@ -44,7 +43,8 @@ int problem_001(problem_solution * ps)
      * upper limit to our required space. 
      *
      * With a safety factor, we make it 100 bytes */
-    char buf[100];
+    /* Update: Made this a #define constant PE_SOLUTION_BUFFER_LEN */
+    char buf[PE_SOLUTION_BUFFER_LEN];
     int ret;
     
     /* natural language solution */
@@ -57,7 +57,7 @@ int problem_001(problem_solution * ps)
         printf("Error: Problem 001: snprintf error\n");
         return EXIT_FAILURE;        
     }
-    ps->natural_language_solution = strdup(buf);
+    ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
 
     /* numeric string solution */
     ret = snprintf(buf, sizeof buf, "%d",solution);
@@ -67,7 +67,7 @@ int problem_001(problem_solution * ps)
         printf("Error: Problem 001: snprintf error\n");
         return EXIT_FAILURE;        
     }
-    ps->numerical_solution = strdup(buf);
+    ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
     return EXIT_SUCCESS;
 }
 

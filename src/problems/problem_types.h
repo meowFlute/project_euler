@@ -12,6 +12,11 @@
  *  -   natural language answer (e.g. "the largest 4-term product in the grid
  *  is <numerical answer>)
  * */
+
+// Project Euler Solution Buffer Length will be common across all solutions so
+// that I can use strnlen and others to varify 
+#define PE_SOLUTION_BUFFER_LEN 100
+
 typedef struct problem_solution {
     unsigned int problem_number;
     char * problem_statement;
