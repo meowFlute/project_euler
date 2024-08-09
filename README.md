@@ -19,7 +19,13 @@ Takes some of the tedium out of working on a new problem
 - Add options for different kinds of output (natural language, tabulated, numeric only responses, etc.)
 
 ## Current Build Status
-Every commit triggers an automatic workflow on an ubuntu machine remotely.
+Every commit triggers a couple of automatic workflows on virtual ubuntu machines remotely using github actions. These workflows run in parallel.
+
+### `make minimal`
+The primary workflow first install the dependencies listed below, then builds using `make minimal` and reports any errors via the status below as well as email alerts to my email address. 
+
+### `make lint`
+A secondary linting workflow installs dependencies as well as splint, then runs `make lint` which uses splint to generate lint.err and lint.out files. The Makefile entry is written such that it ignores errors and simply stores them for later inspection. Both files are available for download as zipped artifacts for every build.
 
 ### build status
 ![Main Project Build Status](https://github.com/meowFlute/project_euler/actions/workflows/makefile.yml/badge.svg)
