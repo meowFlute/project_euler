@@ -16,13 +16,13 @@ PROBLEM_OBJS := $(patsubst $(SRC_DIR)/problems/%.c,$(BUILD_DIR)/problems/%.o,$(P
 OBJS := $(BASE_OBJS) $(PROBLEM_OBJS)
 
 # Add a prefix to INC_DIRS
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+INC_FLAGS := $(addprefix -I,$(INC_DIRS)) -I/usr/local/include
 
 # Compiler flags
 CFLAGS := $(INC_FLAGS) -Wall -Wextra -g
 
 # make all will also run the compiledb and ctags commands
-all: post_build
+all: post_build lint
 
 # this is the one that I'll run as part of my automated checking workflow
 minimal: $(TARGET_EXEC)
@@ -46,6 +46,10 @@ $(BUILD_DIR)/problems/%.o: $(SRC_DIR)/problems/%.c
 post_build: $(TARGET_EXEC)
 	compiledb -n make
 	ctags
+
+.PHONY: lint
+lint: $(BASE_SRCS) $(PROBLEM_SRCS)
+	-splint $(INC_FLAGS) -D__linux__=1 -DPRIu32=\"u\" $^ > lint.out 2> lint.err
 
 .PHONY: clean
 clean:

@@ -45,6 +45,8 @@ project_euler
 .ctags
 tags
 compile_commands.json
+lint.out
+lint.err
 
 # Kernel Module Compile Results
 *.mod*
