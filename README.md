@@ -74,7 +74,6 @@ Takes some of the tedium out of working on a new problem
 
 ### TODO LIST
 - Add in some kind of unit testing suite that checks against the example problems given in most questions as well as the solutions
-- Add options for different kinds of output (natural language, tabulated, numeric only responses, etc.)
 
 ## Current Build Status
 Every commit triggers a couple of automatic workflows on virtual ubuntu machines remotely using github actions. These workflows run in parallel.
