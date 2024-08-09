@@ -200,7 +200,7 @@ int report_results_tabulated_single_line(tabulated_widths tw)
     }
 
     tw.total = 0U;
-    printf("| %-*s ", tw.problem_num, "NUM");
+    printf("| %-*s ", tw.problem_num, "num");
     tw.total += tw.problem_num + 3U;
     if(report_time)
     {
@@ -355,9 +355,10 @@ int report_results(void)
         tw.total += tw.problem_num + 3U; // adding 3 for spaces and column
         if(report_time)
             tw.total += tw.exe_time_precision + tw.exe_time_width
-                + 6U; // adding 6 for spaces, decimal, "ms", and right '|'
+                + 7U; // adding 6 for spaces, decimal, "ms", and right '|'
         if(numeric)
             tw.total += tw.numerical_solution + 3U; // spaces, '|' 
+        tw.total += 1U; // for the final column
 
 #if __linux__
 
@@ -374,7 +375,7 @@ int report_results(void)
             // printf ("columns %d\n", w.ws_col);
 
             // /* show off how perfectly we can measure it */
-            int row, col;
+            int col;
             // for(row = 0; row < (w.ws_row - 4); row++)
             // {
             //     for(col = 0; col < w.ws_col; col++)
@@ -388,21 +389,49 @@ int report_results(void)
              *      - problem statement (optional) 
              *      - natural language solution (optional) 
              * */
+            unsigned short remaining_width = w.ws_col - tw.total;
             if(problem_statement && natural_language)
             {
                 // case with both
                 /* " statements | language |" is the min width */
-                const unsigned short min_width = 24U;
+                const unsigned short min_width = 23U;
                 if((tw.total + min_width) > w.ws_col) // tty too narrow
+                {
                     single_line_print = true;
+                }
+                else
+                {
+                    if((remaining_width % 2) == 0)
+                    { // even case
+                        // remove 3 preemptively for spaces and column
+                        tw.problem_statement = (remaining_width / 2) - 3U;
+                        tw.natural_language = (remaining_width / 2) - 3U;
+                        tw.total = w.ws_col;
+                    }
+                    else 
+                    { // odd case, the remainder goes to the problem statement
+                        //remove 3 preemptively for spaces and column
+                        tw.problem_statement = (remaining_width / 2) - 2U;
+                        tw.natural_language = (remaining_width / 2) - 3U;
+                        tw.total = w.ws_col;
+                    }
+                }
             }
             else if(problem_statement)
             {
                 // problem statement column only
-                /* " statements |" is the min width */
-                const unsigned short min_width = 13U;
+                /* " statement |" is the min width */
+                const unsigned short min_width = 12U;
                 if((tw.total + min_width) > w.ws_col) // tty too narrow
+                {
                     single_line_print = true;
+                }
+                else
+                {
+                    // remove 3 preemptively for spaces and column
+                    tw.problem_statement = remaining_width - 3U;
+                    tw.total = w.ws_col;
+                }   
             }
             else if(natural_language)
             {
@@ -410,7 +439,15 @@ int report_results(void)
                 /* " language |" is min width */
                 const unsigned short min_width = 11U;
                 if((tw.total + min_width) > w.ws_col) // tty too narrow
+                {
                     single_line_print = true;
+                }
+                else
+                {
+                    // remove 3 preemptively for spaces and column
+                    tw.natural_language = remaining_width - 3U;
+                    tw.total = w.ws_col;
+                }
             }
             else
             {
@@ -429,14 +466,217 @@ int report_results(void)
             {
                 // case where we want to build a nice looking table
                 // w.ws_col is a valid width we want to fill
-                for(col = 0; col < w.ws_col; col++)
-                {
-                    putchar('_');
-                }
-                putchar('\n');
-                printf("| NUM ");
+                
+
+                printf("| %-*s ", tw.problem_num, "num");
                 if(report_time)
-                    printf("| exe time");
+                {
+                    printf("| %-*s ", 
+                            tw.exe_time_width + tw.exe_time_precision + 4U, "exe time");
+                }
+                if(numeric)
+                {
+                    printf("| %-*s ", tw.numerical_solution, "answer");
+                }
+                if(natural_language)
+                {
+                    printf("| %-*s ", tw.natural_language, "language");
+                }
+                if(problem_statement)
+                {
+                    printf("| %-*s ", tw.problem_statement, "statement");
+                }
+                printf("|\n");
+                print_width(tw.total, '=');
+
+                for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
+                {
+                    if(problems[i])
+                    {
+                        // start with the fixed-width stuff we know fits
+                        printf("| %0*u ", tw.problem_num, solution_arr[i].problem_number);
+                        if(report_time)
+                            printf("| %*.*f ms ", 
+                                    tw.exe_time_width, 
+                                    tw.exe_time_precision,
+                                    solution_arr[i].execution_time_ms);
+                        if(numeric)
+                            printf("| %*s ", 
+                                    tw.numerical_solution, 
+                                    solution_arr[i].numerical_solution);
+
+                        // three cases for printing the potentially wrapped
+                        // columns: 1) both, 2) natural lang 3) prob statement
+                        if(problem_statement && natural_language)
+                        {
+                            // need to wrap both to potentially different
+                            // lengths
+                            _Bool end_prob = false;
+                            _Bool end_lang = false;
+                            int i_prob, i_lang; 
+                            unsigned short cur_i;
+                            i_prob = 0;
+                            i_lang = 0;
+                            while(!(end_lang && end_prob))
+                            {
+                                // once we run one of these out we want to just
+                                // print the right width
+                                if(end_lang)
+                                {
+                                    // fill natural language with spaces
+                                    printf("| %*s ", tw.natural_language, "");
+                                }
+                                else
+                                {
+                                    // wrap natural language
+                                    printf("| ");
+                                    for(cur_i = 0U; cur_i < tw.natural_language; cur_i++)
+                                    {
+                                        if(solution_arr[i].natural_language_solution[i_lang] != '\0')
+                                        {
+                                            putchar(solution_arr[i].natural_language_solution[i_lang++]);
+                                        }
+                                        else
+                                        {
+                                            end_lang = true;
+                                            putchar(' ');
+                                        }
+                                    }
+                                    putchar(' ');
+                                }
+
+                                if(end_prob)
+                                {
+                                    printf("| %*s ", tw.problem_statement, "");
+                                }
+                                else
+                                {
+                                    // wrap problem statement
+                                    // wrap natural language
+                                    printf("| ");
+                                    for(cur_i = 0U; cur_i < tw.problem_statement; cur_i++)
+                                    {
+                                        if(solution_arr[i].problem_statement[i_prob] != '\0')
+                                        {
+                                            putchar(solution_arr[i].problem_statement[i_prob++]);
+                                        }
+                                        else
+                                        {
+                                            end_prob = true;
+                                            putchar(' ');
+                                        }
+                                    }
+                                    putchar(' ');
+
+                                }
+                                
+                                // do we need to keep wrapping?
+                                if(end_prob && end_lang)
+                                {
+                                    // no this is the last pass
+                                }
+                                else
+                                {
+                                    // yes we have at least one more pass
+                                    printf("|\n");
+                                    printf("| %*s ", tw.problem_num, "");
+                                    if(report_time)
+                                        printf("| %*s ", tw.exe_time_precision + tw.exe_time_width + 4U, "");
+                                    if(numeric)
+                                        printf("| %*s ", tw.numerical_solution, "");
+                                }
+                            }
+                        }
+                        else if(problem_statement)
+                        {
+                            _Bool end_prob = false;
+                            int i_prob; 
+                            unsigned short cur_i;
+                            i_prob = 0;
+                            while(!(end_prob))
+                            {
+                                // wrap problem statement
+                                printf("| ");
+                                for(cur_i = 0U; cur_i < tw.problem_statement; cur_i++)
+                                {
+                                    if(solution_arr[i].problem_statement[i_prob] != '\0')
+                                    {
+                                        putchar(solution_arr[i].problem_statement[i_prob++]);
+                                    }
+                                    else
+                                    {
+                                        end_prob = true;
+                                        putchar(' ');
+                                    }
+                                }
+                                putchar(' ');
+
+                                // do we need to keep wrapping?
+                                if(end_prob)
+                                {
+                                    // no this is the last pass
+                                }
+                                else
+                                {
+                                    // yes we have at least one more pass
+                                    printf("|\n");
+                                    printf("| %*s ", tw.problem_num, "");
+                                    if(report_time)
+                                        printf("| %*s ", tw.exe_time_precision + tw.exe_time_width + 4U, "");
+                                    if(numeric)
+                                        printf("| %*s ", tw.numerical_solution, "");
+                                }
+                            }
+                        }
+                        else if(natural_language)
+                        {
+                            _Bool end_lang = false;
+                            int i_lang; 
+                            unsigned short cur_i;
+                            i_lang = 0;
+
+                            while(!(end_lang))
+                            {
+                                // wrap natural language
+                                printf("| ");
+                                for(cur_i = 0U; cur_i < tw.natural_language; cur_i++)
+                                {
+                                    if(solution_arr[i].natural_language_solution[i_lang] != '\0')
+                                    {
+                                        putchar(solution_arr[i].natural_language_solution[i_lang++]);
+                                    }
+                                    else
+                                    {
+                                        end_lang = true;
+                                        putchar(' ');
+                                    }
+                                }
+                                putchar(' ');
+
+                                // do we need to keep wrapping?
+                                if(end_lang)
+                                {
+                                    // no this is the last pass
+                                }
+                                else
+                                {
+                                    // yes we have at least one more pass
+                                    printf("|\n");
+                                    printf("| %*s ", tw.problem_num, "");
+                                    if(report_time)
+                                        printf("| %*s ", tw.exe_time_precision + tw.exe_time_width + 4U, "");
+                                    if(numeric)
+                                        printf("| %*s ", tw.numerical_solution, "");
+                                }
+                            }
+                            
+                        }
+
+                        // problem printing completed
+                        printf("|\n");
+                        print_width(tw.total, '-');
+                    }
+                }
             }
         }
         else // STDOUT is not a tty!
