@@ -1,0 +1,39 @@
+name: run linter (splint)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install GMP
+      run: sudo apt install libgmp-dev
+
+    - name: Install libprimesieve
+      run: sudo apt install libprimesieve-dev
+
+    - name: Install splint
+      run: sudo apt install splint
+
+    - name: Run splint using command from makefile
+      run: make lint
+
+    - name: Upload lint.out
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint_out
+        path: lint.out
+        
+    - name: Upload lint.err
+      uses: actions/upload-artifact@v4
+      with:
+        name: lint_err
+        path: lint.err
