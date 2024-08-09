@@ -3,6 +3,64 @@
 ## What is this repo?
 Solving the problems at https://projecteuler.net/ for fun. I'll do it in C and/or Fortran and use it as an excuse to do some things in CUDA and OpenCL because that is part of the fun.
 
+### Command-line Usage
+argp was used to create a command-line interface, with `./project_euler --help` showing the familiar help formatting most CLI programs use.
+
+```console
+$ ./project_euler --help
+Usage: project_euler [OPTION...]
+project_euler -- a runnable set of solutions to the problems found on
+projecteuler.net. The version number denotes <main version number>.<max problem
+completed>.<sub version number>. This means that you can't run a problem
+greater than whatever is in the <max problem complete> field of the version
+number
+
+  -a, --all                  run all of the problems
+  -n, --no_numeric_only      report only numbers for solutions
+  -p, --problems=CSV_PROBS   comma-separated (no spaces) integers representing
+                             problems to run.e.g. 1,5,23
+  -s, --problem_statement    include problem statements in the results
+  -t, --time                 track and report CPU time of each problem solution
+                            
+  -x, --natural_language     report full-length text solutions in natural
+                             language
+  -z, --tabulated            report solutions in a table
+  -?, --help                 Give this help list
+      --usage                Give a short usage message
+  -V, --version              Print program version
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+Report bugs to <mscottchristensen@gmail.com>.
+```
+
+Notably, the tabulated output option generates console-width outputs (as long as your console is sufficiently wide for the fixed-width fields) and handles wrapping of the problem statements and natural-language responses.
+
+```console
+$ ./project_euler -ztsp 1
+| num | exe time    | answer | statement                                                                          |
+===================================================================================================================
+| 001 | 0.007000 ms | 233168 | If we list all the natural numbers below 10 that are multiples of 3 or 5, we get 3 |
+|     |             |        | , 5, 6, and 9. The sum of these multiples is 23. Find the sume of all the multiple |
+|     |             |        | s of 3 or 5 below 1000.                                                            |
+-------------------------------------------------------------------------------------------------------------------
+$ ./project_euler -ztsxp 1
+| num | exe time    | answer | language                                | statement                                |
+===================================================================================================================
+| 001 | 0.007000 ms | 233168 | The sum of all multiples of 3 or 5 belo | If we list all the natural numbers below |
+|     |             |        | w 1000 is 233168                        |  10 that are multiples of 3 or 5, we get |
+|     |             |        |                                         |  3, 5, 6, and 9. The sum of these multip |
+|     |             |        |                                         | les is 23. Find the sume of all the mult |
+|     |             |        |                                         | iples of 3 or 5 below 1000.              |
+-------------------------------------------------------------------------------------------------------------------
+$ ./project_euler -ztp 1
+| num | exe time    | answer |
+==============================
+| 001 | 0.007000 ms | 233168 |
+------------------------------
+```
+
 ### Solving New Problems
 I added an automation script in the src directory that will work in most linux environments. It is a simple shell script with usage and help documentation baked in, but the gist of it is you just run it with a problem number that is one larger than the `HIGHEST_PROBLEM_COMPLETED` parameter in main.c
 
