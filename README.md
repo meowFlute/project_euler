@@ -18,7 +18,7 @@ number
   -a, --all                  run all of the problems
   -n, --no_numeric_only      report only numbers for solutions
   -p, --problems=CSV_PROBS   comma-separated (no spaces) integers representing
-                             problems to run.e.g. 1,5,23
+                             problems to run. e.g. 1,5,23
   -s, --problem_statement    include problem statements in the results
   -t, --time                 track and report CPU time of each problem solution
                             
