@@ -70,7 +70,7 @@ static error_t project_euler_parser(int key, char * arg,
 static struct argp_option options[] = {
         {"problems", 'p', "CSV_PROBS", 0,
             "comma-separated (no spaces) integers representing problems to run."
-            "e.g. 1,5,23", 0},
+            " e.g. 1,5,23", 0},
         {"all", 'a', 0, 0,
             "run all of the problems", 0},
         {"time", 't', 0, 0,
