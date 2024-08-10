@@ -1,6 +1,15 @@
 #ifndef _PROJECT_EULER
 #define _PROJECT_EULER
 
+/* program version tracking and reporting constants */
+/* HIGHEST_PROBLEM_COMPLETED also defines problem array lengths and iterator
+ * stopping points */
+#define MAIN_VERSION                3
+#define HIGHEST_PROBLEM_COMPLETED   11
+#define SUB_VERSION                 1
+
+#include "display_results.h"
+
 #include "problems/problem_types.h"
 #include "problems/problem_001.h"
 #include "problems/problem_002.h"
@@ -13,5 +22,14 @@
 #include "problems/problem_009.h"
 #include "problems/problem_010.h"
 #include "problems/problem_011.h"
+
+/* global variables that need to get from main.c to display_results.c */
+extern _Bool problems[HIGHEST_PROBLEM_COMPLETED];
+extern _Bool report_time;
+extern _Bool numeric;
+extern _Bool natural_language;
+extern _Bool problem_statement;
+extern _Bool tabulated;
+extern problem_solution solution_arr[HIGHEST_PROBLEM_COMPLETED];
 
 #endif // _PROJECT_EULER
