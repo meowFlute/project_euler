@@ -49,7 +49,7 @@ post_build: $(TARGET_EXEC)
 
 .PHONY: lint
 lint: $(BASE_SRCS) $(PROBLEM_SRCS)
-	-splint -nullpass -nullassign -unrecog +posixlib \
+	-splint -mustfreeonly -nullpass -nullassign -unrecog +posixlib \
 		$(INC_FLAGS) -D__linux__=1 -DPRIu32=\"u\" \
 		$^ > lint.out 2> lint.err
 

@@ -31,7 +31,7 @@ int problem_001(problem_solution * ps)
     const int max_num = 1000;
     int list[2] = { 3, 5 };
     int solution = sum_of_natural_multiples_below_value(
-            (sizeof list) / sizeof(int) , list, max_num);
+            (int)((sizeof list) / sizeof(int)), list, max_num);
     end = clock();
     cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
     ps->execution_time_ms = cpu_time_used_ms;
@@ -51,7 +51,7 @@ int problem_001(problem_solution * ps)
     ret = snprintf(buf, sizeof buf, 
             "The sum of all multiples of 3 or 5 below 1000 is %d",
             solution);
-    if((ret == sizeof buf) || (ret < 0))
+    if((ret == (int)(sizeof buf)) || (ret < 0))
     {
         perror("project_euler: Problem 001:");
         printf("Error: Problem 001: snprintf error\n");
@@ -61,7 +61,7 @@ int problem_001(problem_solution * ps)
 
     /* numeric string solution */
     ret = snprintf(buf, sizeof buf, "%d",solution);
-    if((ret == sizeof buf) || (ret < 0))
+    if((ret == (int)(sizeof buf)) || (ret < 0))
     {
         perror("project_euler: Problem 001:");
         printf("Error: Problem 001: snprintf error\n");
