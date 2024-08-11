@@ -49,8 +49,8 @@ post_build: $(TARGET_EXEC)
 
 .PHONY: lint
 lint: $(BASE_SRCS) $(PROBLEM_SRCS)
-	-splint $(INC_FLAGS) -D__linux__=1 -DPRIu32=\"u\" $^ > lint.out 2> lint.err
+	-splint -unrecog +posixlib $(INC_FLAGS) -D__linux__=1 -DPRIu32=\"u\" $^ > lint.out 2> lint.err
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET_EXEC)
+	rm -rf $(BUILD_DIR) $(TARGET_EXEC) lint.out lint.err

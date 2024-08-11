@@ -1,15 +1,16 @@
-#include <stdio.h>		// printf
-#include <stdlib.h>		// standard library functions
+#include <stdio.h>  	// printf
+#include <stdlib.h>	// standard library functions
 #include <stdbool.h>	// true, false
-#include <string.h>		// string functions
+#include <errno.h>      // errno
+#include <string.h>	// string functions
 #include <math.h>       // log
 #ifdef __linux__
 #include <sys/ioctl.h>  // ioctl
 #include <unistd.h>     // STDOUT_FILENO
 #endif
 
-#include "project_euler.h" 	// incudes display_results.h as well as important
-							// global variables
+#include "project_euler.h"  // incudes display_results.h as well as important
+			    // global variables
 
 typedef struct tabulated_widths{
     unsigned short total;
@@ -21,17 +22,30 @@ typedef struct tabulated_widths{
     unsigned short natural_language;
 } tabulated_widths;
 
-static void print_width(int width, char c)
+static int print_width(unsigned short width, char c)
 {
-    int i;
+    unsigned short i;
+    int ret;
     for(i = 0; i < width; i++)
     {
-        putchar(c);
+        ret = putchar(c);
+        if( ret == EOF )
+        {
+            printf("ERROR: function print_width: putchar(%c) returned EOF\n", c);
+            return EXIT_FAILURE;
+        }
     }
-    putchar('\n');
+    ret = putchar('\n');
+    if( ret == EOF )
+    {
+        printf("ERROR: function print_width: putchar('\\n') returned EOF\n");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
 
-static int report_results_tabulated_single_line(tabulated_widths tw)
+static int single_line(tabulated_widths tw)
 {
     /* There are two cases where we'd want to do this:
      *  1) not a tty
@@ -39,12 +53,12 @@ static int report_results_tabulated_single_line(tabulated_widths tw)
      * In those cases, we'll simply assume infinite width. We also assume all
      * strings have no newline characters.
      * */
-    int i;
+    int i, ret;
 
     // since we're reporting all of these on one line, we need to set the
     // length of the strings that would normally be wrapped.
-    tw.natural_language = strlen("natural language solution");
-    tw.problem_statement = strlen("problem statement");
+    tw.natural_language = (unsigned short)strlen("natural language solution");
+    tw.problem_statement = (unsigned short)strlen("problem statement");
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
     {
         if(problems[i])
@@ -61,59 +75,74 @@ static int report_results_tabulated_single_line(tabulated_widths tw)
         }
     }
 
-    tw.total = 0U;
-    printf("| %-*s ", tw.problem_num, "num");
+    tw.total = 0;
+    printf("| %-*s ", (int)(tw.problem_num), "num");
     tw.total += tw.problem_num + 3U;
     if(report_time)
     {
         printf("| %-*s ", 
-                tw.exe_time_width + tw.exe_time_precision + 4U, "exe time");
+                (int)(tw.exe_time_width + tw.exe_time_precision + 4U), 
+                "exe time");
         tw.total += tw.exe_time_precision + tw.exe_time_width + 7U;
     }
     if(numeric)
     {
-        printf("| %-*s ", tw.numerical_solution, "answer");
+        printf("| %-*s ", (int)(tw.numerical_solution), "answer");
         tw.total += tw.numerical_solution + 3U;
     }
     if(natural_language)
     {
-        printf("| %-*s ", tw.natural_language, "natural language solution");
+        printf("| %-*s ", (int)(tw.natural_language), "natural language solution");
         tw.total += tw.natural_language + 3U;
     }
     if(problem_statement)
     {
-        printf("| %-*s ", tw.problem_statement, "problem statement");
+        printf("| %-*s ", (int)(tw.problem_statement), "problem statement");
         tw.total += tw.problem_statement + 3U;
     }
     printf("|\n");
     tw.total += 1U;
 
-    print_width(tw.total, '=');
+    ret = print_width(tw.total, '=');
+    if(ret == EXIT_FAILURE)
+    {
+        printf("ERROR: function single_line: print_width(tw.total, '=')" 
+                " returns EXIT_FAILURE\n");
+        return EXIT_FAILURE;
+    }
 
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
     {
         if(problems[i])
         {
-            printf("| %0*u ", tw.problem_num, solution_arr[i].problem_number);
+            printf("| %0*u ", 
+                    (int)(tw.problem_num), 
+                    solution_arr[i].problem_number);
             if(report_time)
                 printf("| %*.*f ms ", 
-                        tw.exe_time_width, 
-                        tw.exe_time_precision,
+                        (int)(tw.exe_time_width), 
+                        (int)(tw.exe_time_precision),
                         solution_arr[i].execution_time_ms);
             if(numeric)
                 printf("| %*s ", 
-                        tw.numerical_solution, 
+                        (int)(tw.numerical_solution), 
                         solution_arr[i].numerical_solution);
             if(natural_language)
                 printf("| %-*s ", 
-                        tw.natural_language, 
+                        (int)(tw.natural_language), 
                         solution_arr[i].natural_language_solution);
             if(problem_statement)
                 printf("| %-*s ", 
-                        tw.problem_statement, 
+                        (int)(tw.problem_statement), 
                         solution_arr[i].problem_statement);
             printf("|\n");
-            print_width(tw.total, '-');
+            ret = print_width(tw.total, '-');
+            if(ret == EXIT_FAILURE)
+            {
+                printf("ERROR: function single_line: print_width(tw.total, '-')" 
+                        " returns EXIT_FAILURE\n");
+                return EXIT_FAILURE;
+            }
         }
     }
     return EXIT_SUCCESS;
@@ -155,17 +184,19 @@ int display_results(void)
         tabulated_widths tw;
         _Bool single_line_print = false;
         unsigned short tmp_time_width, tmp_numerical_width;
-        tw.total = 0U;
+        tw.total = 0;
 
         /* fixed width columns:
          *      - problem number
          *      - time elapsed (optional) 
          *      - numeric_only solution (optional, default)
          * */ 
-        tw.problem_num = 3U;
-        tw.exe_time_precision = 6U;
-        tw.exe_time_width = 1U;
-        tw.numerical_solution = 6U; // "answer" is the min column width
+        tw.problem_num = (unsigned short)3U;
+        tw.exe_time_precision = (unsigned short)6U;
+        tw.exe_time_width = (unsigned short)1U;
+        tw.numerical_solution = (unsigned short)6U;
+        tw.problem_statement = 0;
+        tw.natural_language = 0;
         for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
         {
             if(problems[i])
@@ -182,8 +213,8 @@ int display_results(void)
                 }
                 else
                 {
-                    tw.exe_time_width = 0U;
-                    tw.exe_time_precision = 0U;
+                    tw.exe_time_width = 0;
+                    tw.exe_time_precision = 0;
                 }
 
                 if(numeric) 
@@ -208,7 +239,7 @@ int display_results(void)
                 }
                 else
                 {
-                    tw.numerical_solution = 0U;
+                    tw.numerical_solution = 0;
                 }
             }
         }
@@ -226,26 +257,24 @@ int display_results(void)
 
         /* w.ws_col contains the column width we need to know to keep
          * formatting nice after we use ioctl to check the term */
-        if(isatty(STDOUT_FILENO))
+        int ret = isatty(STDOUT_FILENO);
+        if(ret == 1)
         {
             /* STDOUT is a tty */
             struct winsize w;
+            w.ws_col = (unsigned short)0;
+            w.ws_row = (unsigned short)0;
+            w.ws_xpixel = (unsigned short)0;
+            w.ws_ypixel = (unsigned short)0;
 
             /* use ioctl(TIOCGWINSZ) to query rows and columns in tty */
-            ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-            // printf ("lines %d\n", w.ws_row);
-            // printf ("columns %d\n", w.ws_col);
-
-            // /* show off how perfectly we can measure it */
-            int col;
-            // for(row = 0; row < (w.ws_row - 4); row++)
-            // {
-            //     for(col = 0; col < w.ws_col; col++)
-            //     {
-            //         putchar('=');
-            //     }
-            //     putchar('\n');
-            // }
+            ret = ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+            if(ret == -1)
+            {
+                printf("ERROR: ioctl returned an error. errno=%d message: %s\n",
+                        errno,
+                        strerror(errno));
+            }
 
             /* wrapped columns: 
              *      - problem statement (optional) 
@@ -256,7 +285,7 @@ int display_results(void)
             {
                 // case with both
                 /* " statements | language |" is the min width */
-                const unsigned short min_width = 23U;
+                const unsigned short min_width = (unsigned short)23U;
                 if((tw.total + min_width) > w.ws_col) // tty too narrow
                 {
                     single_line_print = true;
@@ -283,7 +312,7 @@ int display_results(void)
             {
                 // problem statement column only
                 /* " statement |" is the min width */
-                const unsigned short min_width = 12U;
+                const unsigned short min_width = (unsigned short)12U;
                 if((tw.total + min_width) > w.ws_col) // tty too narrow
                 {
                     single_line_print = true;
@@ -299,7 +328,7 @@ int display_results(void)
             {
                 // only natural language column
                 /* " language |" is min width */
-                const unsigned short min_width = 11U;
+                const unsigned short min_width = (unsigned short)11U;
                 if((tw.total + min_width) > w.ws_col) // tty too narrow
                 {
                     single_line_print = true;
@@ -322,7 +351,12 @@ int display_results(void)
             {
                 // case where we don't care about wrapping and just print as if
                 // STDOUT is not a tty just like below
-                report_results_tabulated_single_line(tw);
+                ret = single_line(tw);
+                if(ret == EXIT_FAILURE)
+                {
+                    printf("ERROR: single_line(tw) returned EXIT_FAILURE\n");
+                    return EXIT_FAILURE;
+                }
             }
             else
             {
@@ -330,41 +364,49 @@ int display_results(void)
                 // w.ws_col is a valid width we want to fill
                 
 
-                printf("| %-*s ", tw.problem_num, "num");
+                printf("| %-*s ", (int)(tw.problem_num), "num");
                 if(report_time)
                 {
                     printf("| %-*s ", 
-                            tw.exe_time_width + tw.exe_time_precision + 4U, "exe time");
+                            (int)(tw.exe_time_width + tw.exe_time_precision + 4U), 
+                            "exe time");
                 }
                 if(numeric)
                 {
-                    printf("| %-*s ", tw.numerical_solution, "answer");
+                    printf("| %-*s ", (int)(tw.numerical_solution), "answer");
                 }
                 if(natural_language)
                 {
-                    printf("| %-*s ", tw.natural_language, "language");
+                    printf("| %-*s ", (int)(tw.natural_language), "language");
                 }
                 if(problem_statement)
                 {
-                    printf("| %-*s ", tw.problem_statement, "statement");
+                    printf("| %-*s ", (int)(tw.problem_statement), "statement");
                 }
                 printf("|\n");
-                print_width(tw.total, '=');
+                ret = print_width(tw.total, '=');
+                if(ret == EXIT_FAILURE)
+                {
+                    printf("ERROR: print_width(tw.total, '=') returned EXIT_FAILURE\n");
+                    return EXIT_FAILURE;
+                }
 
                 for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
                 {
                     if(problems[i])
                     {
                         // start with the fixed-width stuff we know fits
-                        printf("| %0*u ", tw.problem_num, solution_arr[i].problem_number);
+                        printf("| %0*u ", 
+                                (int)(tw.problem_num), 
+                                solution_arr[i].problem_number);
                         if(report_time)
                             printf("| %*.*f ms ", 
-                                    tw.exe_time_width, 
-                                    tw.exe_time_precision,
+                                    (int)(tw.exe_time_width), 
+                                    (int)(tw.exe_time_precision),
                                     solution_arr[i].execution_time_ms);
                         if(numeric)
                             printf("| %*s ", 
-                                    tw.numerical_solution, 
+                                    (int)(tw.numerical_solution), 
                                     solution_arr[i].numerical_solution);
 
                         // three cases for printing the potentially wrapped
@@ -386,50 +428,82 @@ int display_results(void)
                                 if(end_lang)
                                 {
                                     // fill natural language with spaces
-                                    printf("| %*s ", tw.natural_language, "");
+                                    printf("| %*s ", 
+                                            (int)(tw.natural_language), "");
                                 }
                                 else
                                 {
                                     // wrap natural language
                                     printf("| ");
-                                    for(cur_i = 0U; cur_i < tw.natural_language; cur_i++)
+                                    for(cur_i = 0; cur_i < tw.natural_language; cur_i++)
                                     {
                                         if(solution_arr[i].natural_language_solution[i_lang] != '\0')
                                         {
-                                            putchar(solution_arr[i].natural_language_solution[i_lang++]);
+                                            ret = putchar(solution_arr[i].natural_language_solution[i_lang++]);
+                                            if( ret == EOF )
+                                            {
+                                                printf("ERROR: function print_width: putchar(%c) returned EOF\n", 
+                                                        solution_arr[i].natural_language_solution[i_lang-1]);
+                                                return EXIT_FAILURE;
+                                            }
                                         }
                                         else
                                         {
                                             end_lang = true;
-                                            putchar(' ');
+                                            ret = putchar(' ');
+                                            if( ret == EOF )
+                                            {
+                                                printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                                return EXIT_FAILURE;
+                                            }
                                         }
                                     }
-                                    putchar(' ');
+                                    ret = putchar(' ');
+                                    if( ret == EOF )
+                                    {
+                                        printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                        return EXIT_FAILURE;
+                                    }
                                 }
 
                                 if(end_prob)
                                 {
-                                    printf("| %*s ", tw.problem_statement, "");
+                                    printf("| %*s ", (int)(tw.problem_statement), "");
                                 }
                                 else
                                 {
                                     // wrap problem statement
                                     // wrap natural language
                                     printf("| ");
-                                    for(cur_i = 0U; cur_i < tw.problem_statement; cur_i++)
+                                    for(cur_i = 0; cur_i < tw.problem_statement; cur_i++)
                                     {
                                         if(solution_arr[i].problem_statement[i_prob] != '\0')
                                         {
-                                            putchar(solution_arr[i].problem_statement[i_prob++]);
+                                            ret = putchar(solution_arr[i].problem_statement[i_prob++]);
+                                            if( ret == EOF )
+                                            {
+                                                printf("ERROR: function print_width: putchar(%c) returned EOF\n", 
+                                                        solution_arr[i].natural_language_solution[i_prob-1]);
+                                                return EXIT_FAILURE;
+                                            }
                                         }
                                         else
                                         {
                                             end_prob = true;
-                                            putchar(' ');
+                                            ret = putchar(' ');
+                                            if( ret == EOF )
+                                            {
+                                                printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                                return EXIT_FAILURE;
+                                            }
                                         }
                                     }
-                                    putchar(' ');
-
+                                    ret = putchar(' ');
+                                    if( ret == EOF )
+                                    {
+                                        printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                        return EXIT_FAILURE;
+                                    }
                                 }
                                 
                                 // do we need to keep wrapping?
@@ -441,11 +515,15 @@ int display_results(void)
                                 {
                                     // yes we have at least one more pass
                                     printf("|\n");
-                                    printf("| %*s ", tw.problem_num, "");
+                                    printf("| %*s ", (int)(tw.problem_num), "");
                                     if(report_time)
-                                        printf("| %*s ", tw.exe_time_precision + tw.exe_time_width + 4U, "");
+                                        printf("| %*s ", 
+                                                (int)(tw.exe_time_precision + tw.exe_time_width + 4U), 
+                                                "");
                                     if(numeric)
-                                        printf("| %*s ", tw.numerical_solution, "");
+                                        printf("| %*s ", 
+                                                (int)(tw.numerical_solution), 
+                                                "");
                                 }
                             }
                         }
@@ -459,19 +537,35 @@ int display_results(void)
                             {
                                 // wrap problem statement
                                 printf("| ");
-                                for(cur_i = 0U; cur_i < tw.problem_statement; cur_i++)
+                                for(cur_i = 0; cur_i < tw.problem_statement; cur_i++)
                                 {
                                     if(solution_arr[i].problem_statement[i_prob] != '\0')
                                     {
-                                        putchar(solution_arr[i].problem_statement[i_prob++]);
+                                        ret = putchar(solution_arr[i].problem_statement[i_prob++]);
+                                        if( ret == EOF )
+                                        {
+                                            printf("ERROR: function print_width: putchar(%c) returned EOF\n", 
+                                                    solution_arr[i].natural_language_solution[i_prob-1]);
+                                            return EXIT_FAILURE;
+                                        }
                                     }
                                     else
                                     {
                                         end_prob = true;
-                                        putchar(' ');
+                                        ret = putchar(' ');
+                                        if( ret == EOF )
+                                        {
+                                            printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                            return EXIT_FAILURE;
+                                        }
                                     }
                                 }
-                                putchar(' ');
+                                ret = putchar(' ');
+                                if( ret == EOF )
+                                {
+                                    printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                    return EXIT_FAILURE;
+                                }
 
                                 // do we need to keep wrapping?
                                 if(end_prob)
@@ -482,11 +576,15 @@ int display_results(void)
                                 {
                                     // yes we have at least one more pass
                                     printf("|\n");
-                                    printf("| %*s ", tw.problem_num, "");
+                                    printf("| %*s ", (int)(tw.problem_num), "");
                                     if(report_time)
-                                        printf("| %*s ", tw.exe_time_precision + tw.exe_time_width + 4U, "");
+                                        printf("| %*s ", 
+                                                (int)(tw.exe_time_precision + tw.exe_time_width + 4U), 
+                                                "");
                                     if(numeric)
-                                        printf("| %*s ", tw.numerical_solution, "");
+                                        printf("| %*s ", 
+                                                (int)(tw.numerical_solution), 
+                                                "");
                                 }
                             }
                         }
@@ -501,20 +599,35 @@ int display_results(void)
                             {
                                 // wrap natural language
                                 printf("| ");
-                                for(cur_i = 0U; cur_i < tw.natural_language; cur_i++)
+                                for(cur_i = 0; cur_i < tw.natural_language; cur_i++)
                                 {
                                     if(solution_arr[i].natural_language_solution[i_lang] != '\0')
                                     {
-                                        putchar(solution_arr[i].natural_language_solution[i_lang++]);
+                                        ret = putchar(solution_arr[i].natural_language_solution[i_lang++]);
+                                        if( ret == EOF )
+                                        {
+                                            printf("ERROR: function print_width: putchar(%c) returned EOF\n", 
+                                                    solution_arr[i].natural_language_solution[i_lang-1]);
+                                            return EXIT_FAILURE;
+                                        }
                                     }
                                     else
                                     {
                                         end_lang = true;
-                                        putchar(' ');
+                                        ret = putchar(' ');
+                                        if( ret == EOF )
+                                        {
+                                            printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                            return EXIT_FAILURE;
+                                        }
                                     }
                                 }
-                                putchar(' ');
-
+                                ret = putchar(' ');
+                                if( ret == EOF )
+                                {
+                                    printf("ERROR: function print_width: putchar(' ') returned EOF\n");
+                                    return EXIT_FAILURE;
+                                }
                                 // do we need to keep wrapping?
                                 if(end_lang)
                                 {
@@ -524,11 +637,15 @@ int display_results(void)
                                 {
                                     // yes we have at least one more pass
                                     printf("|\n");
-                                    printf("| %*s ", tw.problem_num, "");
+                                    printf("| %*s ", (int)(tw.problem_num), "");
                                     if(report_time)
-                                        printf("| %*s ", tw.exe_time_precision + tw.exe_time_width + 4U, "");
+                                        printf("| %*s ", 
+                                                (int)(tw.exe_time_precision + tw.exe_time_width + 4U), 
+                                                "");
                                     if(numeric)
-                                        printf("| %*s ", tw.numerical_solution, "");
+                                        printf("| %*s ", 
+                                                (int)(tw.numerical_solution), 
+                                                "");
                                 }
                             }
                             
@@ -536,7 +653,12 @@ int display_results(void)
 
                         // problem printing completed
                         printf("|\n");
-                        print_width(tw.total, '-');
+                        ret = print_width(tw.total, '-');
+                        if(ret == EXIT_FAILURE)
+                        {
+                            printf("ERROR: print_width returned EXIT_FAILURE\n");
+                            return EXIT_FAILURE;
+                        }   
                     }
                 }
             }
@@ -547,11 +669,36 @@ int display_results(void)
              * examples:
              *      - using "| grep", or other pipes
              *      - routing to a file for storage, e.g. " > test.txt"
+             * the man page for isatty says that one of two (or three) errno
+             * values should be set and we can check them:
+             *      1) EBADF if STDOUT is not a valid file descriptor
+             *      2) ENOTTY (sometimes EINVAL) if it just isn't a tty
              * */
-
-            /* we're going to assume an infinite max width, so the header width
-             * for each field needs to be set by the largest */
-           report_results_tabulated_single_line(tw); 
+            if(errno == EBADF)
+            {
+                printf("ERROR: STDOUT not a valid file descriptor\n");
+                return EXIT_FAILURE;
+            }
+            else if((errno == ENOTTY) || (errno == EINVAL))
+            {
+                /* Based on the man pages for isatty we're ok with these values
+                 * of errno, and they should happen for pipes and such */
+                /* we're going to assume an infinite max width, so the header 
+                 * width for each field needs to be set by the largest */
+                ret = single_line(tw); 
+                if(ret == EXIT_FAILURE)
+                {
+                    printf("ERROR: single_line returned EXIT_FAILURE\n");
+                    return EXIT_FAILURE;
+                }
+            }
+            else
+            {
+                printf("ERROR: unexpexted errno value: errno=%d message: %s\n",
+                        errno,
+                        strerror(errno));
+                return EXIT_FAILURE;
+            }
         }
 #elif defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
         //define something for Windows (32-bit and 64-bit, this part is common)
