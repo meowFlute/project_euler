@@ -112,10 +112,13 @@ static error_t project_euler_parser(int key, char * arg,
     if(key == 'p')
     {
         argument_encountered = true;
-        char * arg_copy = strdup(arg);
-        if(arg_copy == NULL)
+        /* strdup uses malloc, arg_malloc must be freed later */
+        char * arg_malloc = strdup(arg);
+        if(arg_malloc == NULL)
             error(EXIT_FAILURE, errno, "arg_copy malloc failed");
-
+        /* strsep will set the pointer to null without freeing, so we pass it a
+         * copy and retain the original to free later */
+        char * arg_copy = arg_malloc; 
         char * ptr = strsep(&arg_copy, ",");
         if(ptr == NULL)
             argp_error(state, "argument required for --problems");
@@ -134,7 +137,7 @@ static error_t project_euler_parser(int key, char * arg,
             ptr = strsep(&arg_copy, ",");
         }
 
-        free(arg_copy);
+        free(arg_malloc);
     }
 
     return 0;
