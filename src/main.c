@@ -16,7 +16,7 @@
 #define DEF2STR(x) DEF2STRX(x)
 
 /* array of problem run flags */
-_Bool problems[HIGHEST_PROBLEM_COMPLETED] = {false,};
+_Bool problems[HIGHEST_PROBLEM_COMPLETED];
 _Bool argument_encountered = false;
 _Bool report_time = false;
 _Bool numeric = true; //true by default, option sets false
@@ -59,25 +59,34 @@ static error_t project_euler_parser(int key, char * arg,
         struct argp_state * state);
 
 static struct argp_option options[] = {
-        {"problems", 'p', "CSV_PROBS", 0,
-            "comma-separated (no spaces) integers representing problems to run."
-            " e.g. 1,5,23", 0},
-        {"all", 'a', 0, 0,
-            "run all of the problems", 0},
-        {"time", 't', 0, 0,
-            "track and report CPU time of each problem solution", 0},
-        {"no_numeric_only", 'n', 0, 0,
-            "report only numbers for solutions", 0},
-        {"tabulated", 'z', 0, 0,
+        {NULL, 0, NULL, 0,
+            "Tabulation Option Flags:", 0},
+        {"tabulated", (int)('z'), NULL, 0,
             "report solutions in a table", 0},
-        {"problem_statement", 's', 0, 0,
-            "include problem statements in the results", 0},
-        {"natural_language", 'x', 0, 0,
-            "report full-length text solutions in natural language", 0},
-        { 0 }
+        {NULL, 0, NULL, 0,
+            "Problem Selection Options:", 2},
+        {"problems", (int)('p'), "CSV_PROBS", 0,
+            "comma-separated (no spaces) integers representing problems to run."
+            " e.g. 1,5,23", 2},
+        {"all", (int)('a'), NULL, 0,
+            "run all of the problems", 2},
+        {NULL, 0, NULL, 0,
+            "Reported Field Option Flags:", 3},
+        {"time", (int)('t'), NULL, 0,
+            "track and report CPU time of each problem solution", 3},
+        {"no_numeric_only", (int)('n'), NULL, 0,
+            "report only numbers for solutions", 3},
+        {"problem_statement", (int)('s'), NULL, 0,
+            "include problem statements in the results", 3},
+        {"natural_language", (int)('x'), NULL, 0,
+            "report full-length text solutions in natural language", 3},
+        {NULL, 0, NULL, 0,
+            "Help and Information:", 4},
+        { NULL, 0, NULL, 0, NULL, 0 }
     };
 
-static struct argp parser = { options, project_euler_parser, 0, doc, 0, 0, 0 };
+static struct argp parser = { options, project_euler_parser, NULL, doc, 
+                                NULL, NULL, NULL };
 
 static error_t project_euler_parser(int key, char * arg, 
         struct argp_state * state)
@@ -90,17 +99,17 @@ static error_t project_euler_parser(int key, char * arg,
                     "(-t,--time doesn't count)");
         }
     }
-    if(key == 'n')
+    if(key == ((int)('n')))
         numeric = false;
-    if(key == 's')
+    if(key == ((int)('s')))
         problem_statement = true;
-    if(key == 'x')
+    if(key == ((int)('x')))
         natural_language = true;
-    if(key == 'z')
+    if(key == ((int)('z')))
         tabulated = true;
-    if(key == 't')
+    if(key == ((int)('t')))
         report_time = true;
-    if(key == 'a')
+    if(key == ((int)('a')))
     {
         argument_encountered = true;
         int i;
@@ -109,7 +118,7 @@ static error_t project_euler_parser(int key, char * arg,
             problems[i] = true;
         }
     }
-    if(key == 'p')
+    if(key == ((int)('p')))
     {
         argument_encountered = true;
         /* strdup uses malloc, arg_malloc must be freed later */
@@ -147,9 +156,20 @@ static error_t project_euler_parser(int key, char * arg,
 int main(int argc, char * argv[])
 {
     int i, ret; // max < 1,000: int is sufficiently large
+    
+    /* init all problems to false */
+    for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
+    {
+        problems[i] = false;
+    }
 
     /* Run the arg parser to handle user input / program options */
-    argp_parse(&parser, argc, argv, 0, 0, 0);
+    error_t argp_ret = argp_parse(&parser, argc, argv, 0, NULL, NULL);
+    if(argp_ret != 0)
+    {
+        printf("ERROR: argp_parse returned %s\n", strerror(argp_ret));
+        return EXIT_FAILURE;
+    }
 
     /* run each problem indicated by program options */
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
