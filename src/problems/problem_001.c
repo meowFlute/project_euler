@@ -1,9 +1,9 @@
 #include "problem_001.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
+#include <stdio.h>          // printf
+#include <stdlib.h>         // EXIT_SUCCESS
+#include <string.h>         // strdup
+#include <errno.h>          // errno
+#include <time.h>           // clock() utils
 
 int sum_of_natural_multiples_below_value(int num_list, int* list, int value);
 

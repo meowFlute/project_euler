@@ -22,7 +22,7 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS)) -I/usr/local/include
 CFLAGS := $(INC_FLAGS) -Wall -Wextra -g
 
 # make all will also run the compiledb and ctags commands
-all: post_build lint
+all: post_build
 
 # this is the one that I'll run as part of my automated checking workflow
 minimal: $(TARGET_EXEC)
@@ -48,9 +48,9 @@ post_build: $(TARGET_EXEC)
 	ctags
 
 .PHONY: lint
-lint: $(BASE_SRCS) $(PROBLEM_SRCS)
-	-splint -mustfreeonly -nullpass -nullassign -unrecog +posixlib \
-		$(INC_FLAGS) -D__linux__=1 -DPRIu32=\"u\" \
+lint: $(BASE_SRCS) $(PROBLEM_SRCS) 
+	-splint -mustfreeonly -nullpass -nullassign -unrecog -formatcode +posixlib \
+		$(INC_FLAGS) -D__linux__=1 -DPRIu32=\"u\" -DPRIu64=\"lu\" \
 		$^ > lint.out 2> lint.err
 
 .PHONY: clean

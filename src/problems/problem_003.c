@@ -1,7 +1,10 @@
-#include <stdio.h>
-#include <stdint.h>
-
 #include "problem_003.h"
+#include <stdio.h>          // printf
+#include <stdlib.h>         // EXIT_SUCCESS
+#include <inttypes.h>       // PRIu64
+#include <string.h>         // strdup
+#include <errno.h>          // errno
+#include <time.h>           // clock() utils                        
 
 /* PROBLEM 3
  * The prime factors of 13195 are 5, 7, 13, 29
@@ -9,16 +12,25 @@
  * What is the largest prime factor of the number 600851475143?
  * */
 
-void problem_003()
+int problem_003(problem_solution * ps)
 {
-    uint64_t answer, factored_num;
-    uint64_t big_num = 600851475143UL;
+    clock_t start, end;
+    double cpu_time_used_ms;
+    ps->problem_number = 3U;
+    ps->problem_statement = strdup("The prime factors of 13195 are 5, 7, 13, "
+            "29. What is the largest prime factor of the number 600851475143?");
+
+    start = clock();
+    uint64_t answer = 0;
+    uint64_t factored_num;
+    uint64_t big_num = (uint64_t)(600851475143UL);
     
     //2^39 is just smaller than our big numberU, and 2^40 is way biggerU, so it
     //has to have less than 39 factorsU, we'll make an array to hold the factors
     //we find and initialize it to zero
     int current_factor = 0;
-    uint32_t factors[39] = {0U,};
+    uint32_t factors[39];
+    memset(factors, 0, 39*sizeof(uint32_t));
 
     // Let's just load a big lookup table into memory with all the primes up to
     // the square root of our number (which is 775U,146.1)
@@ -6062,7 +6074,7 @@ void problem_003()
     int i = 0;
     factored_num = big_num;
     // full factoring loop
-    while(factored_num != 1UL)
+    while(factored_num != ((uint64_t)1UL))
     {
         //factor-search loop
         while(primes[i] > 0U) // remember we put a zero at the end
@@ -6103,7 +6115,9 @@ void problem_003()
         else if(primes[i] == 0U)
         {
             //this should be an impossible error state
+            answer = 0;
             printf("Problem 003: ERROR: Primes list exhausted");
+            return EXIT_FAILURE;
         }
         else
         {
@@ -6118,6 +6132,32 @@ void problem_003()
             answer = factors[i];
     }
 
-    printf("Problem 003: Largest prime factor of %lu: %lu\n", 
+    end = clock();
+    cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
+    ps->execution_time_ms = cpu_time_used_ms;
+    
+    char buf[PE_SOLUTION_BUFFER_LEN];
+    int ret;
+    /* natural language solution */
+    ret = snprintf(buf, sizeof buf, 
+            "The largest prime factor of %" PRIu64 " is %" PRIu64, 
             big_num, answer);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 003:");
+        printf("Error: Problem 003: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
+
+    /* numeric string solution */
+    ret = snprintf(buf, sizeof buf, "%" PRIu64, answer);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 003:");
+        printf("Error: Problem 003: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
+    return EXIT_SUCCESS;
 }
