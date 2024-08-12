@@ -104,11 +104,10 @@ sed -i 's/xxx/'$standardized_problem_number'/g' "${BASEDIR}/problems/${cfile_fil
 one_less=$(($problem_number-1))
 standardized_one_less=$( printf "%03d" $one_less )
 sed -i -e '/'$standardized_one_less'/a\' -e '#include "problems/'$header_filename'"' "${BASEDIR}/project_euler.h"
+sed -i 's/COMPLETED   '$one_less'/COMPLETED   '$problem_number'/' "${BASEDIR}/project_euler.h"
+sed -i 's/SUB_VERSION                 [0-9]\+/SUB_VERSION                 0/' "${BASEDIR}/project_euler.h"
 
 # Finally, edit the main file
-# We have to update HIGHEST_PROBLEM_COMPLETED because that determines the length of the function pointer array
-sed -i 's/COMPLETED   '$one_less'/COMPLETED   '$problem_number'/' "${BASEDIR}/main.c"
-sed -i 's/SUB_VERSION                 [0-9]\+/SUB_VERSION                 0/' "${BASEDIR}/main.c"
 # That means all we need to do is add a line for a function pointer similar to above
 sed -i -e '/problem_'$standardized_one_less'/a\' -e '    problem_'$standardized_problem_number'' "${BASEDIR}/main.c"
 # don't forget you have to add a comma to what was previously the last line of an array
