@@ -5,7 +5,6 @@
 #include <string.h>     // strtok
 #include <errno.h>      // errno
 #include <error.h>      // error
-#include <time.h>       // cpu timing
 
 /* LOCAL HEADER FILES */
 #include "project_euler.h"
@@ -23,8 +22,6 @@ _Bool numeric = true; //true by default, option sets false
 _Bool natural_language = false;
 _Bool problem_statement = false;
 _Bool tabulated = false;
-clock_t cpu_time_start, cpu_time_end;
-double cpu_time_used;
 
 /* array of problem function pointers */
 int (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (problem_solution * ps) = {
