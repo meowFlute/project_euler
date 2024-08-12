@@ -1,8 +1,11 @@
+#include "problem_004.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <gmp.h>
+#include <time.h>
+#include <errno.h>
 
 /* this will be my first foray into using the GNU Multiprecision Arithmetic 
  * library GMP! It'll be overkill but I want to get comfortable with it now so
@@ -17,13 +20,26 @@
  *
  * Find the largest palindrome made from the product of two 3-digit numbers.
  * */
-void problem_004()
+int problem_004(problem_solution * ps)
 {
+    clock_t start, end;
+    double cpu_time_used_ms;
+    ps->problem_number = 4U;
+    ps->problem_statement = strdup("A palindromic number reads the same both"
+            " ways. The largest palindrome made from the product of two 2-digit"
+            " numbers is 9009 = 91 * 99. Find the largest palindrome made from"
+            " the product of two 3-digit numbers.");
+
+    start = clock();
     // initialize my gmp variables as described in the gmp docs
     mpz_t num1, num2, prod, test;
     mpz_inits(num1, num2, prod, test, NULL);
     unsigned long i, j;
-    char test_str[] = "123456"; // a container with enough room for our number
+    char test_str[] = "1234567"; // a container with enough room for our number
+                                 // the number will be at most 6 digits, a null
+                                 // terminator and a sign (8 bytes), which is
+                                 // how much storage "1234567" statically 
+                                 // allocates
     size_t test_str_len, front, back, k;
     _Bool is_palindrom = true;
 
@@ -49,8 +65,9 @@ void problem_004()
                 break;
             }
 
-            // convert product to a string           
-            mpz_get_str(test_str, 10, test);
+            // convert product to a string, we ignore the result on purpose
+            // because it is just the pointer test_str
+            (void)mpz_get_str(test_str, 10, test);
             
             // test for palindrome by getting the size and checking each to the
             // center
@@ -76,10 +93,36 @@ void problem_004()
         }
     }
 
-    // print the solution using the Z type defined for gmp_printf
-    gmp_printf("Problem 004: Largest palindrome made from the product of \
-two 3-digit numbers: %Zd\n", prod);
+    end = clock();
+    cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
+    ps->execution_time_ms = cpu_time_used_ms;
+    
+    char buf[PE_SOLUTION_BUFFER_LEN]; 
+    int ret;
+    /* natural language solution */
+    ret = gmp_snprintf(buf, sizeof buf, 
+            "The largest palindrome made from the product of two" 
+            "3-digit numbers: %Zd", prod);
+    if((ret >= (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 004:");
+        printf("Error: Problem 004: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
+
+    /* numeric string solution */
+    ret = gmp_snprintf(buf, sizeof buf, "%Zd", prod);
+    if((ret >= (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 004:");
+        printf("Error: Problem 004: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
 
     // make sure to clear all the gmp variables
     mpz_clears(num1, num2, prod, test, NULL);
+
+    return EXIT_SUCCESS;
 }
