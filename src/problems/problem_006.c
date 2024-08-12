@@ -1,10 +1,10 @@
-#include <stdio.h>
-
-// GNU multiple precision Library
-#include <gmp.h>
-
-// global function prototype export
 #include "problem_006.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
+#include <gmp.h>
 
 /* PROBLEM 006
  * The sum of the squares of the first ten natural numbers is:
@@ -21,7 +21,7 @@
  * natural numbers and the square of the sum.
  * */
 // for fun we'll make this multipe precision
-void sum_of_squares_1_to_n(mpz_t sum, mpz_t n)
+static void sum_of_squares_1_to_n(mpz_t sum, mpz_t n)
 {
     mpz_t i, square;
     mpz_init(square); // i to be initialized in for loop
@@ -37,7 +37,7 @@ void sum_of_squares_1_to_n(mpz_t sum, mpz_t n)
     mpz_clears(i, square, NULL);
 }
 
-void square_of_sum_1_to_n(mpz_t square, mpz_t n)
+static void square_of_sum_1_to_n(mpz_t square, mpz_t n)
 {
     mpz_t i, sum;
     mpz_init(sum);
@@ -49,10 +49,28 @@ void square_of_sum_1_to_n(mpz_t square, mpz_t n)
         mpz_add(sum, sum, i);
     }
     mpz_pow_ui(square, sum, 2UL);
+
+    mpz_clears(i, sum, NULL);
 }
 
-void problem_006()
+int problem_006(problem_solution * ps)
 {
+    clock_t start, end; 
+    double cpu_time_used_ms;
+    /* problem number */
+    ps->problem_number = 6U;
+    /* problem statement */
+    ps->problem_statement = strdup("The sum of the squares of the first ten"
+            " natural numbers is: 1^2 + 2^2 + ... + 10^2 = 385. The square of"
+            " the sum of the first ten natural numbers is:"
+            " (1 + 2 + ... + 10)^2 = 55^2 = 3025. Hence the difference between"
+            " the sum of the squares of the first ten natural numbers and the"
+            " square of the sum is: 3025 - 385 = 2640. Find the difference"
+            " between the sum of the squares of the first one hundred natural"
+            " numbers and the square of the sum.");
+
+    /* begin calculation portion */
+    start = clock();
     mpz_t n, sum, square, difference;
     mpz_inits(n, sum, square, difference, NULL);
 
@@ -62,12 +80,37 @@ void problem_006()
     square_of_sum_1_to_n(square, n);
     mpz_sub(difference, square, sum);
     
-    // gmp_printf("Problem 006: The sum of squares from 1 to %Zd: %Zd\n", 
-    //         n, sum);
-    // gmp_printf("Problem 006: The square of the sum from 1 to %Zd: %Zd\n", 
-    //         n, square);
-    gmp_printf("Problem 006: The difference of %Zd - %Zd = %Zd\n", 
-            square, sum, difference);
+    /* end calculation and calculate CPU time used */
+    end = clock();
+    cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
+    ps->execution_time_ms = cpu_time_used_ms;
+    
+    /* store solution */
+    char buf[PE_SOLUTION_BUFFER_LEN]; 
+    int ret;
+    /* natural language solution */
+    ret = gmp_snprintf(buf, sizeof buf, 
+            "The difference of %Zd - %Zd = %Zd", square, sum, difference);
+    if((ret >= (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 006:");
+        printf("Error: Problem 006: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
 
+    /* numeric string solution */
+    ret = gmp_snprintf(buf, sizeof buf, "%Zd", difference);
+    if((ret >= (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 006:");
+        printf("Error: Problem 006: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
+
+    // make sure to clear all the gmp variables
     mpz_clears(n, sum, square, difference, NULL);
+    
+    return EXIT_SUCCESS;
 }
