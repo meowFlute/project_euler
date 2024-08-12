@@ -1,6 +1,10 @@
-#include <stdio.h>
-#include <inttypes.h>
 #include "problem_011.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
 
 /* Problem 011:
  * In the 20 x 20 grid below, four numbers along a diagonal line have been 
@@ -32,8 +36,22 @@
  * What is the greatest product of four adjacent numbers in the same direction 
  * (up, down, left, right, or diagonally) in the 20 x 20 grid?
  * */
-void problem_011()
+int problem_011(problem_solution *ps)
 {
+    clock_t start, end; 
+    double cpu_time_used_ms;
+    char buf[PE_SOLUTION_BUFFER_LEN];
+    int ret;
+
+    ps->problem_number = 11U;
+    ps->problem_statement = strdup("In the 20 x 20 grid below, four numbers"
+            " along a diagonal line have been marked with <>. [GRID OMITTED]."
+            " The product of these numbers is 26 x 63 x 78 x 14 = 1788696."
+            " What is the greatest product of four adjacent numbers in the"
+            " same direction (up, down, left, right, or diagonally) in the"
+            " 20 x 20 grid?");
+
+    start = clock();
     /* Solution Strategy:
      * I am going to assume up and down are the same things, as are left and
      * right, so we really have to search all possible combinations in the
@@ -139,6 +157,28 @@ void problem_011()
         }
     }
 
-    printf("Problem 011: The largest product of 4 adjacent terms (crossword "
-            "style): %" PRIu32 "\n", largest_product);
+    end = clock();
+    cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
+    ps->execution_time_ms = cpu_time_used_ms;
+
+    ret = snprintf(buf, sizeof buf, 
+            "The largest product of 4 adjacent terms (crossword style): %" 
+            PRIu32, largest_product);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 011:");
+        printf("Error: Problem 011: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
+
+    ret = snprintf(buf, sizeof buf, "%" PRIu32, largest_product);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 011:");
+        printf("Error: Problem 011: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
+    return EXIT_SUCCESS;
 }

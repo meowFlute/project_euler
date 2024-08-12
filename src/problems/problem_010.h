@@ -1,6 +1,8 @@
 #ifndef _PROBLEM_010
 #define _PROBLEM_010
 
-void problem_010(void);
+#include "problem_types.h"
+
+int problem_010(problem_solution *ps);
 
 #endif // _PROBLEM_010

@@ -1,6 +1,11 @@
+#include "problem_008.h" // export the global function
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
+#include <inttypes.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
+
 
 /* PROBLEM 008
  * The four adjacent digits in the 1000-digit number that have the greatest 
@@ -31,8 +36,22 @@
  * Find the thirteen adjacent digits in the 1000-digit number that have the 
  * greatest product. What is the value of this product?
  *  */
-void problem_008()
+int problem_008(problem_solution * ps)
 {
+    clock_t start, end; 
+    double cpu_time_used_ms;
+    char buf[PE_SOLUTION_BUFFER_LEN];
+    int ret;
+
+    ps->problem_number = 8U;
+    ps->problem_statement = strdup("The four adjacent digits in the 1000-digit"
+            " number that have the greatest product are: 9 * 9 * 8 * 9 = 5832"
+            " <number omitted>. Find the thirteen adjacent digits in the"
+            " 1000-digit number that have the greatest product. What is the"
+            " value of this product?");
+
+    /* begin computation */
+    start = clock();
     char n[] = "73167176531330624919225119674426574742355349194934\
 96983520312774506326239578318016984801869478851843\
 85861560789112949495459501737958331952853208805511\
@@ -40,7 +59,7 @@ void problem_008()
 66896648950445244523161731856403098711121722383113\
 62229893423380308135336276614282806444486645238749\
 30358907296290491560440772390713810515859307960866\
-70172427121883998797908792274921901699720888093776\
+172427121883998797908792274921901699720888093776\
 65727333001053367881220235421809751254540594752243\
 52584907711670556013604839586446706324415722155397\
 53697817977846174064955149290862569321978468622482\
@@ -75,7 +94,29 @@ void problem_008()
         // advance i
         i++;
     }
+    /* end computation */
+    end = clock();
+    cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
+    ps->execution_time_ms = cpu_time_used_ms;
 
-    printf("Problem 008: Largest 13-factor product in 1000 digit series: %lu\n",
+    ret = snprintf(buf, sizeof buf, 
+            "The largest 13-factor product in 1000 digit series: %" PRIu64, 
             product);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 008:");
+        printf("Error: Problem 008: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
+
+    ret = snprintf(buf, sizeof buf, "%" PRIu64, product);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 008:");
+        printf("Error: Problem 008: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
+    return EXIT_SUCCESS;
 }

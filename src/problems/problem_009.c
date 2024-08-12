@@ -1,5 +1,10 @@
-#include <stdio.h>
 #include "problem_009.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
 
 /* Problem 009:
  * A Pythagorean triplet is a set of three natural numbers, a < b < c, for 
@@ -13,8 +18,20 @@
  * 
  * Find the product a*b*c
  * */
-void problem_009()
+int problem_009(problem_solution *ps)
 {
+    clock_t start, end; 
+    double cpu_time_used_ms;
+    char buf[PE_SOLUTION_BUFFER_LEN];
+    int ret;
+
+    ps->problem_number = 9U;
+    ps->problem_statement = strdup("A Pythagorean triplet is a set of three"
+            " natural numbers, a < b < c, for which, a^2 + b^2 = c^2. For"
+            " example, 3^2 + 4^2 = 5^2. There exists exactly one Pythagorean"
+            " triplet for which a + b + c = 1000. Find the product a*b*c.");
+
+    start = clock();
     /* To start let's list out our constraints:
      *      1) a^2 + b^2 = c^2
      *      2) a + b + c = 1000
@@ -83,8 +100,30 @@ void problem_009()
      *      we can see that with k = 1, a + b + c = 1000
      *
      *      so the solution is simply 200*375*425
-     * */
+     * */ 
+    uint32_t solution = ((uint32_t)(200*375*425)); 
+    end = clock();
+    cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
+    ps->execution_time_ms = cpu_time_used_ms;
 
-    printf("Problem 009: for pythagorean triple where a+b+c=1000, "
-            "a*b*c=%d\n", 200*375*425);
+    ret = snprintf(buf, sizeof buf, 
+            "Problem 009: for pythagorean triple where a+b+c=1000, "
+            "a*b*c=%" PRIu32, solution);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 009:");
+        printf("Error: Problem 009: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
+
+    ret = snprintf(buf, sizeof buf, "%" PRIu32, solution);
+    if((ret == (int)(sizeof buf)) || (ret < 0))
+    {
+        perror("project_euler: Problem 009:");
+        printf("Error: Problem 009: snprintf error\n");
+        return EXIT_FAILURE;        
+    }
+    ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
+    return EXIT_SUCCESS;
 }
