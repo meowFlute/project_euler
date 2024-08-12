@@ -15,16 +15,24 @@ completed>.<sub version number>. This means that you can't run a problem
 greater than whatever is in the <max problem complete> field of the version
 number
 
+ Tabulation Option Flags:
+  -z, --tabulated            report solutions in a table
+
+ Problem Selection Options:
   -a, --all                  run all of the problems
-  -n, --no_numeric_only      report only numbers for solutions
   -p, --problems=CSV_PROBS   comma-separated (no spaces) integers representing
                              problems to run. e.g. 1,5,23
+
+ Reported Field Option Flags:
+  -n, --no_numeric_only      report only numbers for solutions
   -s, --problem_statement    include problem statements in the results
-  -t, --time                 track and report CPU time of each problem solution
-                            
+  -t, --time                 track and report CPU time of each problem
+                             solution
   -x, --natural_language     report full-length text solutions in natural
                              language
-  -z, --tabulated            report solutions in a table
+
+ Help and Information:
+
   -?, --help                 Give this help list
       --usage                Give a short usage message
   -V, --version              Print program version
@@ -74,6 +82,7 @@ Takes some of the tedium out of working on a new problem
 
 ### TODO LIST
 - Add in some kind of unit testing suite that checks against the example problems given in most questions as well as the solutions
+- Add an automated valgrind memory check workflow
 
 ## Current Build Status
 Every commit triggers a couple of automatic workflows on virtual ubuntu machines remotely using github actions. These workflows run in parallel.
