@@ -107,8 +107,8 @@ int problem_009(problem_solution *ps)
     ps->execution_time_ms = cpu_time_used_ms;
 
     ret = snprintf(buf, sizeof buf, 
-            "Problem 009: for pythagorean triple where a+b+c=1000, "
-            "a*b*c=%" PRIu32, solution);
+            "The pythagorean triple where a+b+c=1000, a*b*c=%" PRIu32, 
+            solution);
     if((ret == (int)(sizeof buf)) || (ret < 0))
     {
         perror("project_euler: Problem 009:");
