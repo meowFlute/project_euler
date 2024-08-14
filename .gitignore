@@ -42,7 +42,6 @@ project_euler
 *.su
 *.idb
 *.pdb
-.ctags
 tags
 compile_commands.json
 lint.out
