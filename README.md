@@ -103,6 +103,9 @@ Takes some of the tedium out of working on a new problem
 ### TODO LIST
 - Add in some kind of unit testing suite that checks against the example problems given in most questions as well as the solutions
 - Add an automated valgrind memory check workflow
+- Update main to execute problems in parallel by default
+- Update options to be able to optionally use both serial and parallel execution on applicable problems and compare results
+- Update problems 10 and 12 to be able to use pthreads and benchmark performance increase
 
 ## Current Build Status
 Every commit triggers a couple of automatic workflows on virtual ubuntu machines remotely using github actions. These workflows run in parallel.
