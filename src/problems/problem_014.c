@@ -486,7 +486,7 @@ static int parallel_solution(int* out)
         perror("./project euler: tpool_init:");
         return EXIT_FAILURE;
     }
-    ret = tpool_init(tpool_ptr, (int)(num_processors*2), 1000000, false); 
+    ret = tpool_init(tpool_ptr, (int)(num_processors), 1000000, false); 
 
     // init mutex
     pthread_mutex_init(&data_mutex, NULL);
