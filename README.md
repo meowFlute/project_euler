@@ -106,6 +106,13 @@ Takes some of the tedium out of working on a new problem
 - Update main to execute problems in parallel by default
 - Update options to be able to optionally use both serial and parallel execution on applicable problems and compare results
 - Update problems 10 and 12 to be able to use pthreads and benchmark performance increase
+- Update solution structure to have a field for both CPU time and absolute elaped time from CLOCK_MONOTONIC
+- Update src/main.c to print some machine information prior to running, including:
+    - number of available CPU cores
+    - CPU clock frequency
+    - Amount of available memory
+    - default thread stack size, default page size
+    - clock resultion used for elapsed time measurement  
 
 ## Current Build Status
 Every commit triggers a couple of automatic workflows on virtual ubuntu machines remotely using github actions. These workflows run in parallel.
