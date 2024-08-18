@@ -112,7 +112,9 @@ Takes some of the tedium out of working on a new problem
     - CPU clock frequency
     - Amount of available memory
     - default thread stack size, default page size
-    - clock resultion used for elapsed time measurement  
+    - clock resultion used for elapsed time measurement
+- Update problem 14 to use statically allocated memory for the collatz work_orders to avoid calling malloc and free 999,999 times each
+    - experiment with ways to not use any memory at all, e.g. have the thread pool update a "next" integer
 
 ## Current Build Status
 Every commit triggers a couple of automatic workflows on virtual ubuntu machines remotely using github actions. These workflows run in parallel.
