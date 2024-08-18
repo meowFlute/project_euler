@@ -58,7 +58,7 @@ int problem_010(problem_solution *ps)
     primesieve_free(primes);
     end = clock();
     cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
-    ps->execution_time_ms = cpu_time_used_ms;
+    ps->cpu_time_ms = cpu_time_used_ms;
 
     ret = snprintf(buf, sizeof buf, 
             "The sum of the primes under 2,000,000:%" PRIu64, sum);

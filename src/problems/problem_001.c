@@ -17,7 +17,9 @@ int sum_of_natural_multiples_below_value(int num_list, int* list, int value);
  * */
 int problem_001(problem_solution * ps)
 {
+    int ret;
     clock_t start, end; 
+    struct timespec start_real, end_real;
     double cpu_time_used_ms;
     /* problem number */
     ps->problem_number = 1U;
@@ -27,14 +29,18 @@ int problem_001(problem_solution * ps)
             "The sum of these multiples is 23. "
             "Find the sume of all the multiples of 3 or 5 below 1000.");
 
+    /* start timing */
     start = clock();
+    if((ret = clock_gettime(CLOCK_MONOTONIC, &start_real)) != 0)
+        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
+
     const int max_num = 1000;
     int list[2] = { 3, 5 };
     int solution = sum_of_natural_multiples_below_value(
             (int)((sizeof list) / sizeof(int)), list, max_num);
     end = clock();
     cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
-    ps->execution_time_ms = cpu_time_used_ms;
+    ps->cpu_time_ms = cpu_time_used_ms;
 
     /* Buffer length requirements:
      * if we added the number 1000 1000 times, it would be 1000x1000=1000000

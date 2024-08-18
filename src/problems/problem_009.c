@@ -104,7 +104,7 @@ int problem_009(problem_solution *ps)
     uint32_t solution = ((uint32_t)(200*375*425)); 
     end = clock();
     cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
-    ps->execution_time_ms = cpu_time_used_ms;
+    ps->cpu_time_ms = cpu_time_used_ms;
 
     ret = snprintf(buf, sizeof buf, 
             "The pythagorean triple where a+b+c=1000, a*b*c=%" PRIu32, 

@@ -802,7 +802,7 @@ int problem_014(problem_solution *ps)
 
     /* store timing */
     ans = serial_ans;
-    ps->execution_time_ms = serial_abs_time_ms;
+    ps->cpu_time_ms = serial_abs_time_ms;
 #endif //SERIAL
 
 #if defined(THREAD_POOL) || defined(THREAD_POOL_V0)
@@ -836,7 +836,7 @@ int problem_014(problem_solution *ps)
     
     /* store timing */
     ans = thread_pool_ans;
-    ps->execution_time_ms = thread_pool_abs_time_ms;
+    ps->cpu_time_ms = thread_pool_abs_time_ms;
 #endif //THREAD_POOL
 
     ret = snprintf(buf, sizeof buf, 

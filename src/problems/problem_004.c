@@ -95,7 +95,7 @@ int problem_004(problem_solution * ps)
 
     end = clock();
     cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
-    ps->execution_time_ms = cpu_time_used_ms;
+    ps->cpu_time_ms = cpu_time_used_ms;
     
     char buf[PE_SOLUTION_BUFFER_LEN]; 
     int ret;

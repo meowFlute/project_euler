@@ -122,7 +122,7 @@ static int single_line(tabulated_widths tw)
                 printf("| %*.*f ms ", 
                         (int)(tw.exe_time_width), 
                         (int)(tw.exe_time_precision),
-                        solution_arr[i].execution_time_ms);
+                        solution_arr[i].cpu_time_ms);
             if(numeric)
                 printf("| %*s ", 
                         (int)(tw.numerical_solution), 
@@ -203,10 +203,10 @@ int display_results(void)
             {
                 if(report_time)
                 {
-                    if(solution_arr[i].execution_time_ms > 1.0)
+                    if(solution_arr[i].cpu_time_ms > 1.0)
                     {
                         tmp_time_width = (unsigned short)floor(
-                                log10(solution_arr[i].execution_time_ms)) + 1;
+                                log10(solution_arr[i].cpu_time_ms)) + 1;
                         if(tmp_time_width > tw.exe_time_width)
                             tw.exe_time_width = tmp_time_width;
                     }
@@ -403,7 +403,7 @@ int display_results(void)
                             printf("| %*.*f ms ", 
                                     (int)(tw.exe_time_width), 
                                     (int)(tw.exe_time_precision),
-                                    solution_arr[i].execution_time_ms);
+                                    solution_arr[i].cpu_time_ms);
                         if(numeric)
                             printf("| %*s ", 
                                     (int)(tw.numerical_solution), 
@@ -735,7 +735,7 @@ int display_results(void)
                             solution_arr[i].natural_language_solution);
                 if(report_time)
                     printf("Execution Time: %.3f milliseconds\n", 
-                            solution_arr[i].execution_time_ms);
+                            solution_arr[i].cpu_time_ms);
             }
         }
     }
