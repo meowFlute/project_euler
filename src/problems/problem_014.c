@@ -14,53 +14,17 @@
 #define PE_014_STATUS_BLOCKED -1
 #define PE_014_STATUS_CLOSED -2
 
+const int success = EXIT_SUCCESS;
+const int failure = EXIT_FAILURE;
+
 pthread_mutex_t data_mutex;
 uint32_t parallel_longest_length = 0;
 int parallel_longest_start = 0;
 
-typedef struct work_order_t {
-    int start;
-    uint32_t length;
-    int* longest_start;
-    uint32_t* longest_length;
-    pthread_mutex_t* mutex_ptr;
-} work_order_t;
-
-typedef struct tpool_order_t {
-    void* (*do_work_func)(void* arg);
-    work_order_t* work_order_ptr;
-    struct tpool_order_t* next_tpool_order_ptr;
-} tpool_order_t;
-
-typedef struct {
+typedef struct collatz_run_t {
     int start;
     uint32_t length;
 } collatz_run_t;
-
-typedef struct tpool_t {
-    /* passed as init argumemts */
-    int num_threads;
-    int max_queue_size;
-    _Bool do_not_block_when_full;
-
-    /* other fields */
-    pthread_t* threads;
-    int current_queue_size;
-    tpool_order_t* queue_head;
-    tpool_order_t* queue_tail;
-    pthread_mutex_t mutex_q;
-    pthread_mutex_t mutex_count;
-    pthread_cond_t cond_q_not_empty;
-    pthread_cond_t cond_q_not_full;
-    pthread_cond_t cond_q_empty;
-    pthread_cond_t cond_count_complete;
-    int completed_sequences;
-    _Bool queue_closed;
-    _Bool shutdown;
-} tpool_t;
-
-const int success = EXIT_SUCCESS;
-const int failure = EXIT_FAILURE;
 
 static void * collatz_sequence(void * arg_in)
 {
@@ -96,6 +60,7 @@ static void * collatz_sequence(void * arg_in)
     return (void*) &success;
 }
 
+#ifdef SERIAL
 static int serial_solution(int* out)
 {
     int i, serial_longest_start;
@@ -122,6 +87,44 @@ static int serial_solution(int* out)
     *out = serial_longest_start;
     return EXIT_SUCCESS;
 }
+#endif // SERIAL
+
+#ifdef THREAD_POOL
+typedef struct work_order_t {
+    int start;
+    uint32_t length;
+    int* longest_start;
+    uint32_t* longest_length;
+    pthread_mutex_t* mutex_ptr;
+} work_order_t;
+
+typedef struct tpool_order_t {
+    void* (*do_work_func)(void* arg);
+    work_order_t* work_order_ptr;
+    struct tpool_order_t* next_tpool_order_ptr;
+} tpool_order_t;
+
+typedef struct tpool_t {
+    /* passed as init argumemts */
+    int num_threads;
+    int max_queue_size;
+    _Bool do_not_block_when_full;
+
+    /* other fields */
+    pthread_t* threads;
+    int current_queue_size;
+    tpool_order_t* queue_head;
+    tpool_order_t* queue_tail;
+    pthread_mutex_t mutex_q;
+    pthread_mutex_t mutex_count;
+    pthread_cond_t cond_q_not_empty;
+    pthread_cond_t cond_q_not_full;
+    pthread_cond_t cond_q_empty;
+    pthread_cond_t cond_count_complete;
+    int completed_sequences;
+    _Bool queue_closed;
+    _Bool shutdown;
+} tpool_t;
 
 static void* thread_wrapper(void* arg_in)
 {
@@ -468,7 +471,7 @@ static int tpool_free(tpool_t* tpool_ptr, _Bool finish)
     return EXIT_SUCCESS;
 }
 
-static int parallel_solution(int* out)
+static int thread_pool_solution(int* out)
 {
     int start, ret;
     long int num_processors;
@@ -487,6 +490,8 @@ static int parallel_solution(int* out)
         return EXIT_FAILURE;
     }
     ret = tpool_init(tpool_ptr, (int)(num_processors), 1000000, false); 
+    printf("problem_014: created %ld threads for %ld processors\n", 
+            num_processors, num_processors);
 
     // init mutex
     pthread_mutex_init(&data_mutex, NULL);
@@ -531,13 +536,12 @@ static int parallel_solution(int* out)
     *out = parallel_longest_start;
     return EXIT_SUCCESS;
 }
+#endif // THREAD_POOL
 
 int problem_014(problem_solution *ps)
 {
-    clock_t serial_start, serial_end, parallel_start, parallel_end; 
-    double serial_cpu_time_used_ms, parallel_cpu_time_used_ms;
     char buf[PE_SOLUTION_BUFFER_LEN];
-    int ret, serial_ans = 0, parallel_ans = 0;
+    int ret, ans = 0;
 
     ps->problem_number = 14U;
     ps->problem_statement = strdup("The following iterative sequence is defined"
@@ -552,34 +556,79 @@ int problem_014(problem_solution *ps)
             " at 1. Which starting number, under one million, produces the" 
             " longest chain? NOTE: Once the chain starts the terms are allowed"
             " to go above one million.");
-
-    serial_start = clock();
-    ret = serial_solution(&serial_ans);
-    serial_end = clock();
-    serial_cpu_time_used_ms = 1000.0 * ((double)(serial_end-serial_start)) 
-                                            / CLOCKS_PER_SEC;
     
-    parallel_start = clock();
-    ret = parallel_solution(&parallel_ans);
-    parallel_end = clock();
-    parallel_cpu_time_used_ms = 1000.0 * ((double)(parallel_end-parallel_start)) 
-                                            / CLOCKS_PER_SEC;
+#ifdef SERIAL
+    clock_t serial_cpu_start, serial_cpu_end;
+    struct timespec serial_abs_start, serial_abs_end;
+    double serial_cpu_time_used_ms, serial_abs_time_ms;
+    int serial_ans = 0;
 
-    printf("serial execution_time_ms = %f\n"
-            "parallel execution_time_ms = %f\n", 
-            serial_cpu_time_used_ms, parallel_cpu_time_used_ms);
-    if(serial_cpu_time_used_ms < parallel_cpu_time_used_ms)
-    {
-        ps->execution_time_ms = serial_cpu_time_used_ms;
-    }
-    else
-    {
-        ps->execution_time_ms = parallel_cpu_time_used_ms;
-    }
+    /* start timing */
+    serial_cpu_start = clock();
+    if((ret = clock_gettime(CLOCK_MONOTONIC, &serial_abs_start)) != 0)
+        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
+
+    /* run serial solution */
+    ret = serial_solution(&serial_ans);
+    if(ret == EXIT_FAILURE)
+        fprintf(stderr, "problem_014: serial_solution returned EXIT_FAILURE\n");
+
+    /* stop timing */
+    serial_cpu_end = clock();
+    if((ret = clock_gettime(CLOCK_MONOTONIC, &serial_abs_end)) != 0)
+        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
+
+    /* compute times in milliseconds */
+    serial_cpu_time_used_ms = 1000.0 * ((double)(serial_cpu_end-serial_cpu_start)) / CLOCKS_PER_SEC;
+    if((ret = timespec_subtract(&serial_abs_time_ms, &serial_abs_end, &serial_abs_start)) != EXIT_SUCCESS)
+        printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
+
+    /* report timing */
+    printf("problem_014: serial_solution cpu_time_ms = %.6f ms\n", serial_cpu_time_used_ms);
+    printf("problem_014: serial_solution abs_time_ms = %.6f ms\n", serial_abs_time_ms);
+
+    /* store timing */
+    ans = serial_ans;
+    ps->execution_time_ms = serial_abs_time_ms;
+#endif //SERIAL
+
+#ifdef THREAD_POOL
+    clock_t thread_pool_cpu_start, thread_pool_cpu_end; 
+    struct timespec thread_pool_abs_start, thread_pool_abs_end;
+    double thread_pool_cpu_time_used_ms, thread_pool_abs_time_ms;
+    int thread_pool_ans = 0;
+
+    /* start timing */
+    thread_pool_cpu_start = clock();
+    if((ret = clock_gettime(CLOCK_MONOTONIC, &thread_pool_abs_start)) != 0)
+        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
+
+    /* run thread pool solution */
+    if((ret = thread_pool_solution(&thread_pool_ans)) == EXIT_FAILURE)
+        fprintf(stderr, "problem_014: thread_pool_solution returned EXIT_FAILURE\n");
+
+    /* stop timing */
+    thread_pool_cpu_end = clock();
+    if((ret = clock_gettime(CLOCK_MONOTONIC, &thread_pool_abs_end)) != 0)
+        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
+
+    /* compute times in milliseconds */
+    thread_pool_cpu_time_used_ms = 1000.0 * ((double)(thread_pool_cpu_end-thread_pool_cpu_start)) / CLOCKS_PER_SEC;
+    if((ret = timespec_subtract(&thread_pool_abs_time_ms, &thread_pool_abs_end, &thread_pool_abs_start)) != EXIT_SUCCESS)
+        printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
+    
+    /* report timing */
+    printf("problem_014: thread_pool_solution cpu_time_ms = %.6f ms\n", thread_pool_cpu_time_used_ms);
+    printf("problem_014: thread_pool_solution abs_time_ms = %.6f ms\n", thread_pool_abs_time_ms);
+    
+    /* store timing */
+    ans = thread_pool_ans;
+    ps->execution_time_ms = thread_pool_abs_time_ms;
+#endif //THREAD_POOL
 
     ret = snprintf(buf, sizeof buf, 
             "The longest Collatz chain starting under 1 million is %d long", 
-            serial_ans);
+            ans);
     if((ret == (int)(sizeof buf)) || (ret < 0))
     {
         perror("project_euler: Problem 014:");
@@ -588,7 +637,7 @@ int problem_014(problem_solution *ps)
     }
     ps->natural_language_solution = strndup(buf, (sizeof buf) - 1);
 
-    ret = snprintf(buf, sizeof buf, "%d", parallel_ans);
+    ret = snprintf(buf, sizeof buf, "%d", ans);
     if((ret == (int)(sizeof buf)) || (ret < 0))
     {
         perror("project_euler: Problem 014:");

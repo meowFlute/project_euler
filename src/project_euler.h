@@ -11,6 +11,7 @@
 #include "display_results.h"
 
 #include "problems/problem_types.h"
+#include "problems/problem_utils.h"
 #include "problems/problem_001.h"
 #include "problems/problem_002.h"
 #include "problems/problem_003.h"

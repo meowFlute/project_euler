@@ -206,7 +206,7 @@ int display_results(void)
                     if(solution_arr[i].execution_time_ms > 1.0)
                     {
                         tmp_time_width = (unsigned short)floor(
-                                log10(solution_arr[i].execution_time_ms));
+                                log10(solution_arr[i].execution_time_ms)) + 1;
                         if(tmp_time_width > tw.exe_time_width)
                             tw.exe_time_width = tmp_time_width;
                     }
