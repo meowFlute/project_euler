@@ -86,7 +86,9 @@ then
     echo aborting...
     exit 1
 fi
+echo "copying ${BASEDIR}/problems/problem_xxx.h to new file:${BASEDIR}/problems/${header_filename}"
 cp "${BASEDIR}/problems/problem_xxx.h" "${BASEDIR}/problems/${header_filename}"
+echo "replacing instances of 'xxx' with '${standardized_problem_number}' in ${BASEDIR}/problems/${header_filename}"
 sed -i 's/xxx/'$standardized_problem_number'/g' "${BASEDIR}/problems/${header_filename}"
 
 # Create problems/problem_xxx.c`
@@ -97,18 +99,23 @@ then
     echo aborting...
     exit 1
 fi
+echo "copying ${BASEDIR}/problems/problem_xxx.c to new file:${BASEDIR}/problems/${cfile_filename}"
 cp "${BASEDIR}/problems/problem_xxx.c" "${BASEDIR}/problems/${cfile_filename}"
+echo "replacing instances of 'xxx' with '${standardized_problem_number}' in ${BASEDIR}/problems/${cfile_filename}"
 sed -i 's/xxx/'$standardized_problem_number'/g' "${BASEDIR}/problems/${cfile_filename}"
 
 # Add header to project_euler.h
 one_less=$(($problem_number-1))
 standardized_one_less=$( printf "%03d" $one_less )
+echo "${BASEDIR}/project_euler.h: adding reference to ${header_filename}"
 sed -i -e '/'$standardized_one_less'/a\' -e '#include "problems/'$header_filename'"' "${BASEDIR}/project_euler.h"
+echo "${BASEDIR}/project_euler.h: changing HIGHEST_PROBLEM_COMPLETED to ${problem_number} and SUB_VERSION to 0"
 sed -i 's/COMPLETED   '$one_less'/COMPLETED   '$problem_number'/' "${BASEDIR}/project_euler.h"
 sed -i 's/SUB_VERSION                 [0-9]\+/SUB_VERSION                 0/' "${BASEDIR}/project_euler.h"
 
 # Finally, edit the main file
 # That means all we need to do is add a line for a function pointer similar to above
+echo "${BASEDIR}/main.c: adding function pointer 'problem_${standardized_problem_number}'"
 sed -i -e '/problem_'$standardized_one_less'/a\' -e '    problem_'$standardized_problem_number'' "${BASEDIR}/main.c"
 # don't forget you have to add a comma to what was previously the last line of an array
 sed -i 's/problem_'$standardized_one_less'/problem_'$standardized_one_less',/' "${BASEDIR}/main.c"
