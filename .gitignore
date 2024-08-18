@@ -46,6 +46,7 @@ tags
 compile_commands.json
 lint.out
 lint.err
+*.out.*
 
 # Kernel Module Compile Results
 *.mod*
