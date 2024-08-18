@@ -89,7 +89,219 @@ static int serial_solution(int* out)
 }
 #endif // SERIAL
 
+
 #ifdef THREAD_POOL
+typedef struct tpool_t {
+    /* passed as init argumemts */
+    int num_threads;
+
+    /* other fields */
+    pthread_t* threads;
+    int next_start;
+    pthread_mutex_t mutex_start;
+    _Bool shutdown;
+} tpool_t;
+
+typedef struct tpool_order_t {
+    void* (*do_work_func)(void* arg);
+    int longest_start;
+    int next_start;
+    uint32_t longest_length;
+    tpool_t* tpool_ptr;
+} tpool_order_t;
+
+static void* thread_process_collatz(void* arg_in)
+{
+    tpool_order_t* arg = (tpool_order_t*)arg_in;
+    int* ret_ptr;
+    collatz_run_t run;
+
+    // do collatz run
+    run.length = 0;
+    run.start = arg->next_start;
+    ret_ptr = collatz_sequence((void*) &run);
+    if((*ret_ptr) == EXIT_FAILURE)
+    {
+        printf("ERROR: thread starting at %d collatz_sequence returned"
+                " EXIT_FAILURE\n", arg->next_start);
+        return (void*) &failure;
+    }
+
+    // store data
+    if( (arg->longest_length) < (run.length) )
+    {
+        (arg->longest_length) = run.length;
+        (arg->longest_start) = run.start;
+    }
+
+    return (void*)&success;
+}
+
+static void* thread_wrapper(void* arg_in)
+{
+    tpool_order_t* tpool_order_ptr = (tpool_order_t*)arg_in;
+
+    int ret;
+    int* ret_ptr;
+    tpool_t* tpool_ptr = tpool_order_ptr->tpool_ptr;
+
+    // threads loop waiting for work until shutdown command
+    while(true)
+    {
+        /* lock start mutex */
+        ret = pthread_mutex_lock(&(tpool_ptr->mutex_start));
+        if(ret == EINVAL)
+        {
+            fprintf(stderr, "ERROR: mutex_q not initialized correctly\n");
+            return (void*)tpool_order_ptr;
+        }
+        
+        /* exit on shutdown regardless of queue size/state */
+        if(tpool_ptr->shutdown)
+        {
+            pthread_mutex_unlock(&(tpool_ptr->mutex_start));
+            break;
+        }
+
+        /* grab the next available start and increment pool next start */
+        if(tpool_ptr->next_start < PE_014_HIGHEST_START)
+        {
+            tpool_order_ptr->next_start = tpool_ptr->next_start++;
+        }
+        else
+        {
+            /* if some thread has already taken all the possible starts, then
+             * signal the remaining threads to shutdown and exit */
+            tpool_ptr->shutdown = true;
+            pthread_mutex_unlock(&(tpool_ptr->mutex_start));
+            break;
+        }
+        
+        /* unlock mutex */
+        ret = pthread_mutex_unlock(&(tpool_ptr->mutex_start));
+
+        /* if we're here there is work to be done fresh from the buffer */
+        int start = tpool_order_ptr->next_start;
+        ret_ptr = (int*)(*(tpool_order_ptr->do_work_func))((void*)(tpool_order_ptr));
+        if((*ret_ptr) == EXIT_FAILURE)
+        {
+            fprintf(stderr, "ERROR: Collatz run %d returned EXIT_FAILURE\n", start);
+            return (void*)tpool_order_ptr;
+        }
+    }
+
+    return (void*)tpool_order_ptr;
+}
+
+
+static int tpool_init(tpool_t* tpool_ptr, int num_threads)
+{
+    int i, ret;
+    
+    /* pass arguments */
+    tpool_ptr->num_threads = num_threads;
+    
+    /* allocate threads memory region and init */
+    tpool_ptr->threads = (pthread_t*)malloc(sizeof(pthread_t)*num_threads);
+    if(tpool_ptr->threads == NULL)
+    {
+        perror("./project euler: tpool_init:");
+        return EXIT_FAILURE;
+    }
+    tpool_order_t* tpool_order_ptrs = (tpool_order_t*)malloc(sizeof(tpool_order_t)*num_threads);
+    if(tpool_ptr->threads == NULL)
+    {
+        perror("./project euler: tpool_init:");
+        return EXIT_FAILURE;
+    }
+    
+
+    /* init mutex and condition variables */
+    ret = pthread_mutex_init(&(tpool_ptr->mutex_start), NULL);
+    if(ret != 0)
+    {
+        fprintf(stderr, "ERROR: failed to init thread pool mutex. error = %s", 
+                strerror(ret));
+        return EXIT_FAILURE;
+    }
+
+    /* init the rest */
+    tpool_ptr->shutdown = false;
+    tpool_ptr->next_start = 1;
+
+    /* create threads and get them going (waiting for data) in the thread
+     * wrapper */
+    for(i = 0; i < num_threads; i++)
+    {
+        /* init tpool_order ptr for this id and send it */
+        tpool_order_ptrs[i].longest_length = 0;
+        tpool_order_ptrs[i].longest_start = 0;
+        tpool_order_ptrs[i].next_start = 0;
+        tpool_order_ptrs[i].tpool_ptr = tpool_ptr;
+        tpool_order_ptrs[i].do_work_func = thread_process_collatz;
+        ret = pthread_create(&(tpool_ptr->threads[i]), NULL, thread_wrapper, (void*)&tpool_order_ptrs[i]);
+        if(ret != 0)
+        {
+            printf("ERROR: error when creating thread %d, error = %s\n",
+                    i, strerror(ret));
+            return EXIT_FAILURE;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+static int thread_pool_solution(int* out)
+{
+    int ret, i;
+    long int num_processors;
+
+    // query the number of registered CPUs
+    num_processors = sysconf(_SC_NPROCESSORS_CONF);
+
+    // create thread pool
+    tpool_t* tpool_ptr;
+    /* allocate memory for tpool -- freed later in calling function */
+    tpool_ptr = (tpool_t*)malloc(sizeof(tpool_t));
+    if(tpool_ptr == NULL)
+    {
+        perror("./project euler: tpool_init:");
+        return EXIT_FAILURE;
+    }
+    /* work starts here */
+    ret = tpool_init(tpool_ptr, (int)(num_processors)); 
+    printf("problem_014: created %ld threads for %ld processors\n", 
+            num_processors, num_processors);
+
+    /* landing point for return values */
+    tpool_order_t** return_values = (tpool_order_t**)malloc(sizeof(tpool_order_t*)*num_processors);
+
+    /* wait for work to complete and then identify longest */
+    int longest_start_of_all = 0;
+    uint32_t longest_length_of_all = 0;
+    for(i = 0; i < tpool_ptr->num_threads; i++)
+    {
+        if((ret = pthread_join(tpool_ptr->threads[i], (void**)&(return_values[i]))) != 0)
+            perror("problem_014: pthread_join failed");
+        if(return_values[i]->longest_length > longest_length_of_all)
+        {
+            longest_length_of_all = return_values[i]->longest_length;
+            longest_start_of_all = return_values[i]->longest_start;
+        }
+    }
+
+    /* free all values */
+    free(return_values[0]);     // free the tpool_order_t's malloc'd in init
+    free(return_values);        // free the return value pointer array
+    free(tpool_ptr->threads);   // free the thread array
+    free(tpool_ptr);            // free the threadpool container
+
+    *out = longest_start_of_all;
+    return EXIT_SUCCESS;
+}
+#endif // THREAD_POOL
+
+#ifdef THREAD_POOL_V0
 typedef struct work_order_t {
     int start;
     uint32_t length;
@@ -125,6 +337,50 @@ typedef struct tpool_t {
     _Bool queue_closed;
     _Bool shutdown;
 } tpool_t;
+static void* thread_process_collatz(void* arg_in)
+{
+    work_order_t* arg = (work_order_t*)arg_in;
+    int* ret_ptr;
+    int ret;
+    collatz_run_t run;
+
+    // do collatz run
+    run.length = 0;
+    run.start = arg->start;
+    ret_ptr = collatz_sequence((void*) &run);
+    if((*ret_ptr) == EXIT_FAILURE)
+    {
+        printf("ERROR: thread starting at %d collatz_sequence returned"
+                " EXIT_FAILURE\n", arg->start);
+        return (void*) &failure;
+    }
+    arg->length = run.length;
+
+    // store data using mutex
+    ret = pthread_mutex_lock(arg->mutex_ptr);
+    if(ret == EINVAL)
+    {
+        printf("data mutex was not initialized properly\n");
+        free(arg);
+        return (void*)&failure;
+    }
+
+    if( (*(arg->longest_length)) < (arg->length) )
+    {
+        *(arg->longest_length) = arg->length;
+        *(arg->longest_start) = arg->start;
+    }
+
+    ret = pthread_mutex_unlock(arg->mutex_ptr);
+    if(ret == EINVAL)
+    {
+        printf("data mutex was not initialized properly\n");
+        free(arg);
+        return (void*)&failure;
+    }
+    free(arg);
+    return (void*)&success;
+}
 
 static void* thread_wrapper(void* arg_in)
 {
@@ -211,50 +467,7 @@ static void* thread_wrapper(void* arg_in)
 
     return (void*)&success;
 }
-static void* thread_process_collatz(void* arg_in)
-{
-    work_order_t* arg = (work_order_t*)arg_in;
-    int* ret_ptr;
-    int ret;
-    collatz_run_t run;
 
-    // do collatz run
-    run.length = 0;
-    run.start = arg->start;
-    ret_ptr = collatz_sequence((void*) &run);
-    if((*ret_ptr) == EXIT_FAILURE)
-    {
-        printf("ERROR: thread starting at %d collatz_sequence returned"
-                " EXIT_FAILURE\n", arg->start);
-        return (void*) &failure;
-    }
-    arg->length = run.length;
-
-    // store data using mutex
-    ret = pthread_mutex_lock(arg->mutex_ptr);
-    if(ret == EINVAL)
-    {
-        printf("data mutex was not initialized properly\n");
-        free(arg);
-        return (void*)&failure;
-    }
-
-    if( (*(arg->longest_length)) < (arg->length) )
-    {
-        *(arg->longest_length) = arg->length;
-        *(arg->longest_start) = arg->start;
-    }
-
-    ret = pthread_mutex_unlock(arg->mutex_ptr);
-    if(ret == EINVAL)
-    {
-        printf("data mutex was not initialized properly\n");
-        free(arg);
-        return (void*)&failure;
-    }
-    free(arg);
-    return (void*)&success;
-}
 
 static int tpool_init(tpool_t* tpool_ptr, int num_threads, int max_queue_size, _Bool do_not_block_when_full)
 {
@@ -536,7 +749,7 @@ static int thread_pool_solution(int* out)
     *out = parallel_longest_start;
     return EXIT_SUCCESS;
 }
-#endif // THREAD_POOL
+#endif // THREAD_POOL_V0
 
 int problem_014(problem_solution *ps)
 {
@@ -592,7 +805,7 @@ int problem_014(problem_solution *ps)
     ps->execution_time_ms = serial_abs_time_ms;
 #endif //SERIAL
 
-#ifdef THREAD_POOL
+#if defined(THREAD_POOL) || defined(THREAD_POOL_V0)
     clock_t thread_pool_cpu_start, thread_pool_cpu_end; 
     struct timespec thread_pool_abs_start, thread_pool_abs_end;
     double thread_pool_cpu_time_used_ms, thread_pool_abs_time_ms;
