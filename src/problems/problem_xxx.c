@@ -13,7 +13,7 @@ int problem_xxx(problem_solution *ps)
     char buf[PE_SOLUTION_BUFFER_LEN];
     int ret;
 
-    // ps->problem_number = xxxU;
+    // TODO: ps->problem_number = xxxU;
     ps->problem_statement = strdup("Insert problem xxx statement here");
 
     /* start timing */

@@ -14,7 +14,7 @@ int problem_015(problem_solution *ps)
     char buf[PE_SOLUTION_BUFFER_LEN];
     int ret;
 
-    // ps->problem_number = 015U;
+    ps->problem_number = 15U;
     ps->problem_statement = strdup("Starting in the top left corner of a 2 * 2"
             " grid, and only being able to move to the right and down, there are"
             " exactly 6 routes to the bottom right corner. How many such routes"
