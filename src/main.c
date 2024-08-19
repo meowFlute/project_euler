@@ -5,6 +5,9 @@
 #include <string.h>     // strtok
 #include <errno.h>      // errno
 #include <error.h>      // error
+#include <unistd.h>     // sysconf
+#include <inttypes.h>   // uint64_t and PRIu64
+#include <sys/sysinfo.h> // get_phys_pages
 
 /* LOCAL HEADER FILES */
 #include "project_euler.h"
@@ -161,8 +164,10 @@ static error_t project_euler_parser(int key, char * arg,
 
 int main(int argc, char * argv[])
 {
-    int i, ret; // max < 1,000: int is sufficiently large
-    
+    int i, ret, pagesize; // max < 1,000: int is sufficiently large
+    double total_memory, available_memory;
+    struct timespec clock_res;
+
     /* init all problems to false */
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
     {
@@ -173,9 +178,27 @@ int main(int argc, char * argv[])
     error_t argp_ret = argp_parse(&parser, argc, argv, 0, NULL, NULL);
     if(argp_ret != 0)
     {
-        printf("ERROR: argp_parse returned %s\n", strerror(argp_ret));
-        return EXIT_FAILURE;
+        fprintf(stderr, "error: argp_parse returned %s\n", strerror(argp_ret));
+        return argp_ret;
     }
+
+    /* print some standard system information */
+    const int str_width = 35;
+    if((ret = clock_getres(CLOCK_MONOTONIC, &clock_res)) != 0)
+        perror("main.c: clock_getres():");
+    pagesize = getpagesize();
+    total_memory = (double)pagesize * (double)get_phys_pages() / (1024.0 * 1024.0); 
+    available_memory = (double)pagesize * (double)get_avphys_pages() / (1024.0 * 1024.0); 
+
+    printf("%*s: VERSION %d.%d.%d\n", str_width, "SCOTT'S PROJECT EULER SOFTWARE", MAIN_VERSION, HIGHEST_PROBLEM_COMPLETED, SUB_VERSION);
+    printf("%*s: %ld\n", str_width, "number of configured processors", sysconf(_SC_NPROCESSORS_CONF));
+    printf("%*s: %ld\n", str_width, "number of available processors", sysconf(_SC_NPROCESSORS_ONLN));
+    printf("%*s: %ld\n", str_width, "CLOCKS_PER_SEC", (long int)CLOCKS_PER_SEC);
+    printf("%*s: %ld nanoseconds\n", str_width, "CLOCK_MONOTONIC resolution", clock_res.tv_nsec);
+    printf("%*s: %7.1f MB\n", str_width, "total memory", total_memory); 
+    printf("%*s: %7.1f MB\n", str_width, "available memory", available_memory);
+    printf("%*s: %d bytes\n", str_width, "page size", pagesize);
+    printf("\n");
 
     /* run each problem indicated by program options */
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)

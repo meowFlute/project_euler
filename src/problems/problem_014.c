@@ -276,8 +276,6 @@ static int thread_pool_solution(int* out)
     }
     /* work starts here */
     ret = tpool_init(tpool_ptr, (int)(num_processors)); 
-    printf("problem_014: created %ld threads for %ld processors\n", 
-            num_processors, num_processors);
 
     /* landing point for return values */
     tpool_order_t** return_values = (tpool_order_t**)malloc(sizeof(tpool_order_t*)*num_processors);
@@ -709,8 +707,6 @@ static int thread_pool_solution(int* out)
         return EXIT_FAILURE;
     }
     ret = tpool_init(tpool_ptr, (int)(num_processors), 1000000, false); 
-    printf("problem_014: created %ld threads for %ld processors\n", 
-            num_processors, num_processors);
 
     // init mutex
     pthread_mutex_init(&data_mutex, NULL);
@@ -802,10 +798,6 @@ int problem_014(problem_solution *ps)
     if((ret = timespec_subtract(&serial_abs_time_ms, &serial_abs_end, &serial_abs_start)) != EXIT_SUCCESS)
         printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
 
-    /* report timing */
-    printf("problem_014: serial_solution cpu_time_ms = %.6f ms\n", serial_cpu_time_used_ms);
-    printf("problem_014: serial_solution abs_time_ms = %.6f ms\n", serial_abs_time_ms);
-
     /* store timing */
     ans = serial_ans;
     ps->cpu_time_ms = serial_cpu_time_used_ms;
@@ -836,10 +828,6 @@ int problem_014(problem_solution *ps)
     thread_pool_cpu_time_used_ms = 1000.0 * ((double)(thread_pool_cpu_end-thread_pool_cpu_start)) / CLOCKS_PER_SEC;
     if((ret = timespec_subtract(&thread_pool_abs_time_ms, &thread_pool_abs_end, &thread_pool_abs_start)) != EXIT_SUCCESS)
         printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
-    
-    /* report timing */
-    printf("problem_014: thread_pool_solution cpu_time_ms = %.6f ms\n", thread_pool_cpu_time_used_ms);
-    printf("problem_014: thread_pool_solution abs_time_ms = %.6f ms\n", thread_pool_abs_time_ms);
     
     /* store timing */
     ans = thread_pool_ans;
