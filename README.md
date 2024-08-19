@@ -18,27 +18,7 @@ number
  Tabulation Option Flags:
   -z, --tabulated            report solutions in a table
 
- Problem Selection Options:
-  -a, --all                  run all of the problems
-  -p, --problems=CSV_PROBS   comma-separated (no spaces) integers representing
-                             problems to run. e.g. 1,5,23
-
- Reported Field Option Flags:
-  -n, --no_numeric_only      report only numbers for solutions
-  -s, --problem_statement    include problem statements in the results
-  -t, --time                 track and report CPU time of each problem
-                             solution
-  -x, --natural_language     report full-length text solutions in natural
-                             language
-
- Help and Information:
-
-  -?, --help                 Give this help list
-      --usage                Give a short usage message
-  -V, --version              Print program version
-
-Mandatory or optional arguments to long options are also mandatory or optional
-for any corresponding short options.
+...
 
 Report bugs to <mscottchristensen@gmail.com>.
 ```
