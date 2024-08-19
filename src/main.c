@@ -17,7 +17,8 @@
 /* array of problem run flags */
 _Bool problems[HIGHEST_PROBLEM_COMPLETED];
 _Bool argument_encountered = false;
-_Bool report_time = false;
+_Bool report_real_time = false;
+_Bool report_cpu_time = false;
 _Bool numeric = true; //true by default, option sets false
 _Bool natural_language = false;
 _Bool problem_statement = false;
@@ -72,8 +73,10 @@ static struct argp_option options[] = {
             "run all of the problems", 2},
         {NULL, 0, NULL, 0,
             "Reported Field Option Flags:", 3},
-        {"time", (int)('t'), NULL, 0,
-            "track and report CPU time of each problem solution", 3},
+        {"real_time", (int)('t'), NULL, 0,
+            "track and report calendar time of each problem solution", 3},
+        {"cpu_time", (int)('c'), NULL, 0,
+            "track and report cpu time of each problem solution", 3},
         {"no_numeric_only", (int)('n'), NULL, 0,
             "report only numbers for solutions", 3},
         {"problem_statement", (int)('s'), NULL, 0,
@@ -108,7 +111,9 @@ static error_t project_euler_parser(int key, char * arg,
     if(key == ((int)('z')))
         tabulated = true;
     if(key == ((int)('t')))
-        report_time = true;
+        report_real_time = true;
+    if(key == ((int)('c')))
+        report_cpu_time = true;
     if(key == ((int)('a')))
     {
         argument_encountered = true;

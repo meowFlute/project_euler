@@ -19,7 +19,6 @@ int problem_001(problem_solution * ps)
 {
     int ret;
     clock_t start, end; 
-    struct timespec start_real, end_real;
     double cpu_time_used_ms;
     /* problem number */
     ps->problem_number = 1U;
@@ -31,8 +30,6 @@ int problem_001(problem_solution * ps)
 
     /* start timing */
     start = clock();
-    if((ret = clock_gettime(CLOCK_MONOTONIC, &start_real)) != 0)
-        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
 
     const int max_num = 1000;
     int list[2] = { 3, 5 };
@@ -41,6 +38,7 @@ int problem_001(problem_solution * ps)
     end = clock();
     cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
     ps->cpu_time_ms = cpu_time_used_ms;
+    ps->real_time_ms = 0.0;
 
     /* Buffer length requirements:
      * if we added the number 1000 1000 times, it would be 1000x1000=1000000
@@ -51,7 +49,6 @@ int problem_001(problem_solution * ps)
      * With a safety factor, we make it 100 bytes */
     /* Update: Made this a #define constant PE_SOLUTION_BUFFER_LEN */
     char buf[PE_SOLUTION_BUFFER_LEN];
-    int ret;
     
     /* natural language solution */
     ret = snprintf(buf, sizeof buf, 

@@ -29,7 +29,8 @@
 
 /* global variables that need to get from main.c to display_results.c */
 extern _Bool problems[HIGHEST_PROBLEM_COMPLETED];
-extern _Bool report_time;
+extern _Bool report_real_time;
+extern _Bool report_cpu_time;
 extern _Bool numeric;
 extern _Bool natural_language;
 extern _Bool problem_statement;

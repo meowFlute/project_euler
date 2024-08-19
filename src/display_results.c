@@ -12,6 +12,8 @@
 #include "project_euler.h"  // incudes display_results.h as well as important
 			    // global variables
 
+#define TIME_ADDER 6U
+
 typedef struct tabulated_widths{
     unsigned short total;
     unsigned short problem_num;
@@ -78,12 +80,19 @@ static int single_line(tabulated_widths tw)
     tw.total = 0;
     printf("| %-*s ", (int)(tw.problem_num), "num");
     tw.total += tw.problem_num + 3U;
-    if(report_time)
+    if(report_cpu_time)
     {
         printf("| %-*s ", 
-                (int)(tw.exe_time_width + tw.exe_time_precision + 4U), 
-                "exe time");
-        tw.total += tw.exe_time_precision + tw.exe_time_width + 7U;
+                (int)(tw.exe_time_width + TIME_ADDER-3), 
+                "cpu time");
+        tw.total += tw.exe_time_width;
+    }
+    if(report_real_time)
+    {
+        printf("| %-*s ", 
+                (int)(tw.exe_time_width + TIME_ADDER-3), 
+                "cpu time");
+        tw.total += tw.exe_time_width;
     }
     if(numeric)
     {
@@ -118,11 +127,16 @@ static int single_line(tabulated_widths tw)
             printf("| %0*u ", 
                     (int)(tw.problem_num), 
                     solution_arr[i].problem_number);
-            if(report_time)
+            if(report_cpu_time)
                 printf("| %*.*f ms ", 
                         (int)(tw.exe_time_width), 
                         (int)(tw.exe_time_precision),
                         solution_arr[i].cpu_time_ms);
+            if(report_real_time)
+                printf("| %*.*f ms ", 
+                        (int)(tw.exe_time_width), 
+                        (int)(tw.exe_time_precision),
+                        solution_arr[i].real_time_ms);
             if(numeric)
                 printf("| %*s ", 
                         (int)(tw.numerical_solution), 
@@ -201,17 +215,29 @@ int display_results(void)
         {
             if(problems[i])
             {
-                if(report_time)
+                if(report_cpu_time)
                 {
                     if(solution_arr[i].cpu_time_ms > 1.0)
                     {
                         tmp_time_width = (unsigned short)floor(
-                                log10(solution_arr[i].cpu_time_ms)) + 1;
+                                log10(solution_arr[i].cpu_time_ms)) + 2 + tw.exe_time_precision;
                         if(tmp_time_width > tw.exe_time_width)
                             tw.exe_time_width = tmp_time_width;
                     }
                 }
-                else
+
+                if(report_real_time)
+                {
+                    if(solution_arr[i].cpu_time_ms > 1.0)
+                    {
+                        tmp_time_width = (unsigned short)floor(
+                                log10(solution_arr[i].real_time_ms)) + 2 + tw.exe_time_precision;
+                        if(tmp_time_width > tw.exe_time_width)
+                            tw.exe_time_width = tmp_time_width;
+                    }
+                }
+                
+                if((!report_real_time) && (!report_cpu_time))
                 {
                     tw.exe_time_width = 0;
                     tw.exe_time_precision = 0;
@@ -246,9 +272,10 @@ int display_results(void)
 
         /* calculate how much width we have left for the wrapped columns */
         tw.total += tw.problem_num + 3U; // adding 3 for spaces and column
-        if(report_time)
-            tw.total += tw.exe_time_precision + tw.exe_time_width
-                + 7U; // adding 6 for spaces, decimal, "ms", and right '|'
+        if(report_real_time)
+            tw.total += tw.exe_time_precision + tw.exe_time_width;
+        if(report_cpu_time)
+            tw.total += tw.exe_time_precision + tw.exe_time_width;
         if(numeric)
             tw.total += tw.numerical_solution + 3U; // spaces, '|' 
         tw.total += 1U; // for the final column
@@ -365,11 +392,17 @@ int display_results(void)
                 
 
                 printf("| %-*s ", (int)(tw.problem_num), "num");
-                if(report_time)
+                if(report_cpu_time)
                 {
                     printf("| %-*s ", 
-                            (int)(tw.exe_time_width + tw.exe_time_precision + 4U), 
-                            "exe time");
+                            (int)(tw.exe_time_width + TIME_ADDER - 3), 
+                            "cpu time");
+                }
+                if(report_real_time)
+                {
+                    printf("| %-*s ", 
+                            (int)(tw.exe_time_width + TIME_ADDER - 3), 
+                            "real time");
                 }
                 if(numeric)
                 {
@@ -399,11 +432,16 @@ int display_results(void)
                         printf("| %0*u ", 
                                 (int)(tw.problem_num), 
                                 solution_arr[i].problem_number);
-                        if(report_time)
+                        if(report_cpu_time)
                             printf("| %*.*f ms ", 
                                     (int)(tw.exe_time_width), 
                                     (int)(tw.exe_time_precision),
                                     solution_arr[i].cpu_time_ms);
+                        if(report_real_time)
+                            printf("| %*.*f ms ", 
+                                    (int)(tw.exe_time_width), 
+                                    (int)(tw.exe_time_precision),
+                                    solution_arr[i].real_time_ms);
                         if(numeric)
                             printf("| %*s ", 
                                     (int)(tw.numerical_solution), 
@@ -516,9 +554,13 @@ int display_results(void)
                                     // yes we have at least one more pass
                                     printf("|\n");
                                     printf("| %*s ", (int)(tw.problem_num), "");
-                                    if(report_time)
+                                    if(report_cpu_time)
                                         printf("| %*s ", 
-                                                (int)(tw.exe_time_precision + tw.exe_time_width + 4U), 
+                                                (int)(tw.exe_time_width + TIME_ADDER - 3), 
+                                                "");
+                                    if(report_real_time)
+                                        printf("| %*s ", 
+                                                (int)(tw.exe_time_width + TIME_ADDER - 3), 
                                                 "");
                                     if(numeric)
                                         printf("| %*s ", 
@@ -577,9 +619,13 @@ int display_results(void)
                                     // yes we have at least one more pass
                                     printf("|\n");
                                     printf("| %*s ", (int)(tw.problem_num), "");
-                                    if(report_time)
+                                    if(report_cpu_time)
                                         printf("| %*s ", 
-                                                (int)(tw.exe_time_precision + tw.exe_time_width + 4U), 
+                                                (int)(tw.exe_time_width + TIME_ADDER - 3), 
+                                                "");
+                                    if(report_real_time)
+                                        printf("| %*s ", 
+                                                (int)(tw.exe_time_width + TIME_ADDER - 3), 
                                                 "");
                                     if(numeric)
                                         printf("| %*s ", 
@@ -638,9 +684,13 @@ int display_results(void)
                                     // yes we have at least one more pass
                                     printf("|\n");
                                     printf("| %*s ", (int)(tw.problem_num), "");
-                                    if(report_time)
+                                    if(report_cpu_time)
                                         printf("| %*s ", 
-                                                (int)(tw.exe_time_precision + tw.exe_time_width + 4U), 
+                                                (int)(tw.exe_time_width + TIME_ADDER - 3), 
+                                                "");
+                                    if(report_real_time)
+                                        printf("| %*s ", 
+                                                (int)(tw.exe_time_width + TIME_ADDER - 3), 
                                                 "");
                                     if(numeric)
                                         printf("| %*s ", 
@@ -733,9 +783,12 @@ int display_results(void)
                 if(natural_language)
                     printf("Natural Language Solution: %s\n",
                             solution_arr[i].natural_language_solution);
-                if(report_time)
-                    printf("Execution Time: %.3f milliseconds\n", 
+                if(report_cpu_time)
+                    printf("CPU Time: %.3f milliseconds\n", 
                             solution_arr[i].cpu_time_ms);
+                if(report_real_time)
+                    printf("Calendar Time: %.3f milliseconds\n", 
+                            solution_arr[i].real_time_ms);
             }
         }
     }

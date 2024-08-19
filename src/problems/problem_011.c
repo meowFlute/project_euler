@@ -160,6 +160,7 @@ int problem_011(problem_solution *ps)
     end = clock();
     cpu_time_used_ms = 1000.0 * ((double)(end-start)) / CLOCKS_PER_SEC;
     ps->cpu_time_ms = cpu_time_used_ms;
+    ps->real_time_ms = 0.0;
 
     ret = snprintf(buf, sizeof buf, 
             "The largest product of 4 adjacent terms (crossword style): %" 
