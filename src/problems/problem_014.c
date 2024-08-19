@@ -13,14 +13,14 @@
 /* the makefile will define default if you don't define these through the
  * CLI_CONSTS variable, e.g. 'make CLI_CONSTS=-DSERIAL' */
 #ifdef DEFAULT
-#define THREAD_POOL
+#define THREAD_PEER
 #endif
 
 #define PE_014_HIGHEST_START 1000000
 #define PE_014_STATUS_BLOCKED -1
 #define PE_014_STATUS_CLOSED -2
 
-const int success = EXIT_SUCCESS;
+const int success = RETURN_SUCCESS;
 const int failure = EXIT_FAILURE;
 
 pthread_mutex_t data_mutex;
@@ -91,10 +91,104 @@ static int serial_solution(int* out)
     }
 
     *out = serial_longest_start;
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
 #endif // SERIAL
 
+#ifdef THREAD_PEER
+typedef struct thread_work_t {
+    int thread_id;
+    int num_threads;
+    int longest_start;
+    uint32_t longest_length;
+} thread_work_t;
+
+static void* thread_work_function(void* arg_in)
+{
+    thread_work_t* tw_p = (thread_work_t*)arg_in;
+    int i;
+    int* ret_ptr;
+    collatz_run_t run;
+    /* PE_014_HIGHEST_START = 1,000,000, so 4 threads = 250,000, 8 = 125,000 */
+    int section_length = PE_014_HIGHEST_START / tw_p->num_threads;
+    int first = (tw_p->thread_id)*section_length; // thread_id indexed by 0 up to num_threads-1
+    if(first == 0) // what a silly bug to miss haha this creates an infinite loop
+        first++;
+    int last_plusone = (((tw_p->thread_id)+1)*section_length);
+    // with the above collatz_run() method we just iterate through all 1,000,000
+    for(i = first; i < last_plusone; i++)
+    {
+        run.start = i;
+        ret_ptr = (int*)collatz_sequence((void*) &run);
+        if((*ret_ptr) == EXIT_FAILURE)
+        {
+            fprintf(stderr, "problem_014: error: thread peer run %d returned EXIT_FAILURE\n", i);
+            return (void*)&failure;
+        }
+        if(tw_p->longest_length < run.length)
+        {
+            tw_p->longest_start = i;
+            tw_p->longest_length = run.length;
+        }
+    }
+    return (void*)&success;
+}
+
+int thread_peer_solution(int* out)
+{
+    int i, longest_start_of_all;
+    uint32_t longest_length_of_all;
+    int* ret;
+    /* create nproc - 1 threads 
+     * (because this thread will also compute as the last thread) */
+    long int num_processors;
+    num_processors = sysconf(_SC_NPROCESSORS_CONF);
+    pthread_t * threads = (pthread_t*)malloc(sizeof(pthread_t)*(num_processors-1));
+    if(threads == NULL)
+        perror("problem_014: thread peer threads malloc failure");
+    
+    /* malloc memory for arguments to thread_work_function() */
+    thread_work_t* tw_p = (thread_work_t*)malloc(sizeof(thread_work_t)*num_processors);
+    for(i = 0; i < num_processors; i++)
+    {
+        tw_p[i].num_threads = num_processors;
+        tw_p[i].thread_id = i;
+        tw_p[i].longest_length = 0;
+        tw_p[i].longest_start = 0;
+        if(i != (num_processors-1))
+        {
+            pthread_create(&(threads[i]), NULL, thread_work_function, (void*)&(tw_p[i]));
+        }
+        else // last thread is this one, so launch directly
+        {
+            ret = (int*)thread_work_function((void*)&(tw_p[i]));
+            if((*ret) == EXIT_FAILURE)
+                fprintf(stderr, "thread %d (self) returned EXIT_FAILURE\n", i);
+        }
+    }
+
+    /* wait for all other threads to complete and determine longest */
+    longest_start_of_all = tw_p[num_processors-1].longest_start;
+    longest_length_of_all = tw_p[num_processors-1].longest_length;
+    for(i = 0; i < num_processors-1; i++)
+    {
+        pthread_join(threads[i], (void**)&ret);
+        if((*ret) == EXIT_FAILURE)
+            fprintf(stderr, "thread %d returned EXIT_FAILURE\n", i);
+        if(tw_p[i].longest_length > longest_length_of_all)
+        {
+            longest_length_of_all = tw_p[i].longest_length;
+            longest_start_of_all = tw_p[i].longest_start;
+        }
+    }
+
+    free(tw_p);
+    free(threads);
+    
+    *out = longest_start_of_all;
+    return RETURN_SUCCESS;
+}
+#endif // THREAD_PEER
 
 #ifdef THREAD_POOL
 typedef struct tpool_t {
@@ -254,7 +348,7 @@ static int tpool_init(tpool_t* tpool_ptr, int num_threads)
         }
     }
 
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
 
 static int thread_pool_solution(int* out)
@@ -301,7 +395,7 @@ static int thread_pool_solution(int* out)
     free(tpool_ptr);            // free the threadpool container
 
     *out = longest_start_of_all;
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
 #endif // THREAD_POOL
 
@@ -556,7 +650,7 @@ static int tpool_init(tpool_t* tpool_ptr, int num_threads, int max_queue_size, _
         }
     }
 
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
 
 static int tpool_add_work(tpool_t* tpool_ptr, void* func_handle, void* arg_in)
@@ -607,7 +701,7 @@ static int tpool_add_work(tpool_t* tpool_ptr, void* func_handle, void* arg_in)
         tpool_ptr->current_queue_size++;
     }
     pthread_mutex_unlock(&(tpool_ptr->mutex_q));
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
 
 static int tpool_free(tpool_t* tpool_ptr, _Bool finish)
@@ -630,7 +724,7 @@ static int tpool_free(tpool_t* tpool_ptr, _Bool finish)
             printf("ERROR: mutex_unlock: error %s\n", strerror(ret));
             return EXIT_FAILURE;
         }
-        return EXIT_SUCCESS;
+        return RETURN_SUCCESS;
     }
 
     tpool_ptr->queue_closed = true;
@@ -685,7 +779,7 @@ static int tpool_free(tpool_t* tpool_ptr, _Bool finish)
 
     free(tpool_ptr->threads);
     free(tpool_ptr);
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
 
 static int thread_pool_solution(int* out)
@@ -749,7 +843,7 @@ static int thread_pool_solution(int* out)
     tpool_free(tpool_ptr, true);
 
     *out = parallel_longest_start;
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
 #endif // THREAD_POOL_V0
 
@@ -795,7 +889,7 @@ int problem_014(problem_solution *ps)
 
     /* compute times in milliseconds */
     serial_cpu_time_used_ms = 1000.0 * ((double)(serial_cpu_end-serial_cpu_start)) / CLOCKS_PER_SEC;
-    if((ret = timespec_subtract(&serial_abs_time_ms, &serial_abs_end, &serial_abs_start)) != EXIT_SUCCESS)
+    if((ret = timespec_subtract(&serial_abs_time_ms, &serial_abs_end, &serial_abs_start)) != RETURN_SUCCESS)
         printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
 
     /* store timing */
@@ -803,6 +897,37 @@ int problem_014(problem_solution *ps)
     ps->cpu_time_ms = serial_cpu_time_used_ms;
     ps->real_time_ms = serial_abs_time_ms;
 #endif //SERIAL
+
+#ifdef THREAD_PEER
+    clock_t thread_peer_cpu_start, thread_peer_cpu_end; 
+    struct timespec thread_peer_abs_start, thread_peer_abs_end;
+    double thread_peer_cpu_time_used_ms, thread_peer_abs_time_ms;
+    int thread_peer_ans = 0;
+
+    /* start timing */
+    thread_peer_cpu_start = clock();
+    if((ret = clock_gettime(CLOCK_MONOTONIC, &thread_peer_abs_start)) != 0)
+        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
+
+    /* run thread peer solution */
+    if((ret = thread_peer_solution(&thread_peer_ans)) == EXIT_FAILURE)
+        fprintf(stderr, "problem_014: thread_peer_solution returned EXIT_FAILURE\n");
+
+    /* stop timing */
+    thread_peer_cpu_end = clock();
+    if((ret = clock_gettime(CLOCK_MONOTONIC, &thread_peer_abs_end)) != 0)
+        fprintf(stderr, "clock_gettime returned -1, errno=%d, %s\n", errno, strerror(errno));
+
+    /* compute times in milliseconds */
+    thread_peer_cpu_time_used_ms = 1000.0 * ((double)(thread_peer_cpu_end-thread_peer_cpu_start)) / CLOCKS_PER_SEC;
+    if((ret = timespec_subtract(&thread_peer_abs_time_ms, &thread_peer_abs_end, &thread_peer_abs_start)) != RETURN_SUCCESS)
+        printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
+    
+    /* store timing */
+    ans = thread_peer_ans;
+    ps->cpu_time_ms = thread_peer_cpu_time_used_ms;
+    ps->real_time_ms = thread_peer_abs_time_ms;
+#endif
 
 #if defined(THREAD_POOL) || defined(THREAD_POOL_V0)
     clock_t thread_pool_cpu_start, thread_pool_cpu_end; 
@@ -826,7 +951,7 @@ int problem_014(problem_solution *ps)
 
     /* compute times in milliseconds */
     thread_pool_cpu_time_used_ms = 1000.0 * ((double)(thread_pool_cpu_end-thread_pool_cpu_start)) / CLOCKS_PER_SEC;
-    if((ret = timespec_subtract(&thread_pool_abs_time_ms, &thread_pool_abs_end, &thread_pool_abs_start)) != EXIT_SUCCESS)
+    if((ret = timespec_subtract(&thread_pool_abs_time_ms, &thread_pool_abs_end, &thread_pool_abs_start)) != RETURN_SUCCESS)
         printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
     
     /* store timing */
@@ -854,5 +979,5 @@ int problem_014(problem_solution *ps)
         return EXIT_FAILURE;        
     }
     ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
-    return EXIT_SUCCESS;
+    return RETURN_SUCCESS;
 }
