@@ -5,7 +5,9 @@ BUILD_DIR=./build
 SRC_DIR=./src
 INC_DIRS := $(SRC_DIR) $(SRC_DIR)/problems
 LDFLAGS := -pthread -lgmp -lm -lprimesieve
-CLI_CONSTS=
+ifndef CLI_CONSTS
+CLI_CONSTS=-DDEFAULT
+endif
 
 # Find all the files we want to compile, without folder names
 BASE_SRCS := $(wildcard $(SRC_DIR)/*.c) 

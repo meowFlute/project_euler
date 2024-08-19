@@ -10,6 +10,12 @@
 #include <unistd.h>
 #include <pthread.h>
 
+/* the makefile will define default if you don't define these through the
+ * CLI_CONSTS variable, e.g. 'make CLI_CONSTS=-DSERIAL' */
+#ifdef DEFAULT
+#define THREAD_POOL
+#endif
+
 #define PE_014_HIGHEST_START 1000000
 #define PE_014_STATUS_BLOCKED -1
 #define PE_014_STATUS_CLOSED -2
