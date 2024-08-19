@@ -31,7 +31,7 @@ int problem_xxx(problem_solution *ps)
     /* calculate times in milliseconds */
     cpu_time_used_ms = 1000.0 * ((double)(end_cpu-start_cpu)) / CLOCKS_PER_SEC;
     if((ret = timespec_subtract(&real_time_used_ms, &end_real, &start_real)) != RETURN_SUCCESS)
-        printf("timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
+        fprintf(stderr, "timespec_subtract returned %d, error = %s\n", ret, strerror(ret));
     
 
     ps->cpu_time_ms = cpu_time_used_ms;
