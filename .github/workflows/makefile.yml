@@ -25,3 +25,6 @@ jobs:
 
     - name: Run make without the ctags generation and stuff
       run: make minimal
+
+    - name: Run ./project_euler
+      run: ./project_euler -ztx --all
