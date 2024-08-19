@@ -27,4 +27,4 @@ jobs:
       run: make minimal
 
     - name: Run ./project_euler
-      run: ./project_euler -ztx --all
+      run: ./project_euler -ztc --all
