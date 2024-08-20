@@ -5,7 +5,7 @@
 /* HIGHEST_PROBLEM_COMPLETED also defines problem array lengths and iterator
  * stopping points */
 #define MAIN_VERSION                3
-#define HIGHEST_PROBLEM_COMPLETED   19
+#define HIGHEST_PROBLEM_COMPLETED   20
 #define SUB_VERSION                 0
 
 #include "display_results.h"
@@ -31,6 +31,7 @@
 #include "problems/problem_017.h"
 #include "problems/problem_018.h"
 #include "problems/problem_019.h"
+#include "problems/problem_020.h"
 
 /* global variables that need to get from main.c to display_results.c */
 extern _Bool problems[HIGHEST_PROBLEM_COMPLETED];
