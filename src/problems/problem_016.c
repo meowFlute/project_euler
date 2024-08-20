@@ -43,6 +43,7 @@ int problem_016(problem_solution *ps)
     mpz_ui_pow_ui(two_to_one_thou, 2UL, 1000UL);
     /* solution MUST be freed after we're done with it (see free below) */
     solution = mpz_get_str(NULL, 10, two_to_one_thou);
+    mpz_clear(two_to_one_thou);
     // add up the characters by subtracting '0' from each 
     while(solution[i] != '\0')
     {

@@ -78,6 +78,8 @@ int problem_015(problem_solution *ps)
     }
     ps->numerical_solution = strndup(buf, (sizeof buf) - 1);
 
+    mpz_clears(fourty_factorial, twenty_factorial, twenty_factorial_product, 
+            quotient, remainder, NULL);
     free(mallocd_answer);
     return RETURN_SUCCESS;
 }
