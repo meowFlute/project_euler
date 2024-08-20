@@ -49,7 +49,7 @@ int maximum_path_sum(int* out, const char* t_path_str)
         do{
             // allocate node
             node_p = (node_t*)malloc(sizeof(node_t));
-            
+
             // init node value
             node_p->value = atoi(num_str);
 
@@ -141,15 +141,17 @@ int maximum_path_sum(int* out, const char* t_path_str)
     {
         // start at the bottom of the triangle
         node_p = tri_p->rows_leftmost_nodes[i];
-        while(tmp_node_p != NULL) // free all nodes in rows
+        while(node_p != NULL) // free all nodes in rows
         {
             tmp_node_p = node_p->next_right;
-            free(node_p);
+            free(node_p); // free from the node_t mallocs
             node_p = tmp_node_p;
         }
         tri_p->rows_leftmost_nodes[i] = NULL; // end of row clear
     }
+    free(tri_p->rows_leftmost_nodes); // free pointer array from realloc
     free(tri_p); // free triangle_t container
+
     *out = max_sum;
     return RETURN_SUCCESS;
 }

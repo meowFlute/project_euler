@@ -8,6 +8,7 @@ LDFLAGS := -pthread -lgmp -lm -lprimesieve
 ifndef CLI_CONSTS
 CLI_CONSTS=-DDEFAULT
 endif
+CLI_CONSTS+=-D_GNU_SOURCE
 
 # Find all the files we want to compile, without folder names
 BASE_SRCS := $(wildcard $(SRC_DIR)/*.c) 

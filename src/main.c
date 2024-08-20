@@ -47,7 +47,8 @@ int (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (problem_solution * ps) = {
     problem_015,
     problem_016,
     problem_017,
-    problem_018
+    problem_018,
+    problem_019
 };
 
 problem_solution solution_arr[HIGHEST_PROBLEM_COMPLETED];
