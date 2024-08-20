@@ -79,19 +79,24 @@ static struct argp_option options[] = {
         {"problems", (int)('p'), "CSV_PROBS", 0,
             "comma-separated (no spaces) integers representing problems to run."
             " e.g. 1,5,23", 2},
+        {"range", (int)('r'), "RANGE_PROBS", 0,
+            "START and END (inclusive) problem numbers separated by hyphen with no spaces,"
+            " e.g. 5-10", 2},
+        {"last-five", (int)('l'), NULL, 0,
+            "same as --range=(HIGHEST_PROBLEM_COMPLETED-5)-(HIGHEST_PROBLEM_COMPLETED)", 2},
         {"all", (int)('a'), NULL, 0,
             "run all of the problems", 2},
         {NULL, 0, NULL, 0,
             "Reported Field Option Flags:", 3},
-        {"real_time", (int)('t'), NULL, 0,
+        {"real-time", (int)('t'), NULL, 0,
             "track and report calendar time of each problem solution", 3},
-        {"cpu_time", (int)('c'), NULL, 0,
+        {"cpu-time", (int)('c'), NULL, 0,
             "track and report cpu time of each problem solution", 3},
-        {"no_numeric_only", (int)('n'), NULL, 0,
+        {"no-numeric-only", (int)('n'), NULL, 0,
             "report only numbers for solutions", 3},
-        {"problem_statement", (int)('s'), NULL, 0,
+        {"problem-statement", (int)('s'), NULL, 0,
             "include problem statements in the results", 3},
-        {"natural_language", (int)('x'), NULL, 0,
+        {"natural-language", (int)('x'), NULL, 0,
             "report full-length text solutions in natural language", 3},
         {NULL, 0, NULL, 0,
             "Help and Information:", 4},
@@ -108,8 +113,8 @@ static error_t project_euler_parser(int key, char * arg,
     {
         if(!argument_encountered)
         {
-            argp_error(state, "at least one argument is required "
-                    "(-t,--time doesn't count)");
+            argp_error(state, "at least one Problem Selection Option is required "
+                    "possible Problem Selection Options: -alpr ... (-t,--time and others don't count)");
         }
     }
     if(key == ((int)('n')))
@@ -132,6 +137,42 @@ static error_t project_euler_parser(int key, char * arg,
         {
             problems[i] = true;
         }
+    }
+    if(key == ((int)('l')))
+    {
+        argument_encountered = true;
+        int i;
+        for(i = HIGHEST_PROBLEM_COMPLETED-6; i < HIGHEST_PROBLEM_COMPLETED; i++)
+        {
+            problems[i] = true;
+        }
+    }
+    if(key == ((int)('r')))
+    {
+        argument_encountered = true;
+        /* strdup uses malloc, arg_malloc must be freed later */
+        char * arg_malloc = strdup(arg);
+        if(arg_malloc == NULL)
+            error(EXIT_FAILURE, errno, "arg_copy malloc failed");
+        /* strsep will set the pointer to null without freeing, so we pass it a
+         * copy and retain the original to free later */
+        char * arg_copy = arg_malloc; 
+        char * ptr1 = strsep(&arg_copy, "-"); // start of range
+        char * ptr2 = strsep(&arg_copy, "-"); // end of range
+        char * ptr3 = strsep(&arg_copy, "-"); // this one should be NULL
+        if((ptr1 == NULL) || (ptr2 == NULL) || (ptr3 != NULL))
+            argp_error(state, "incorrect arguments for --range");
+        int i = 0;
+        int start = atoi(ptr1);
+        int end = atoi(ptr2);
+        if((start == 0) || (end == 0))
+            argp_error(state, "incorrect arguments for --range");
+        for(i = start-1; i < end; i++)
+        {
+            problems[i] = true;
+        }
+
+        free(arg_malloc);
     }
     if(key == ((int)('p')))
     {
