@@ -44,6 +44,7 @@ jobs:
     - name: install dependencies
       run: |
           brew install make
+          brew install argp-standalone
           brew install gmp
           brew install primesieve
     - name: make clean
