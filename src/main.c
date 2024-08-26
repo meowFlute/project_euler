@@ -6,7 +6,6 @@
 #include <errno.h>      // errno
 #include <unistd.h>     // sysconf
 #include <inttypes.h>   // uint64_t and PRIu64
-#include <sys/sysinfo.h> // get_phys_pages
 
 /* LOCAL HEADER FILES */
 #include "project_euler.h"
@@ -332,9 +331,9 @@ int main(int argc, char * argv[])
         const int str_width = 35;
         if((ret = clock_getres(CLOCK_MONOTONIC, &clock_res)) != 0)
             perror("main.c: clock_getres():");
-        pagesize = getpagesize();
-        total_memory = (double)pagesize * (double)get_phys_pages() / (1024.0 * 1024.0); 
-        available_memory = (double)pagesize * (double)get_avphys_pages() / (1024.0 * 1024.0); 
+        pagesize = sysconf(_SC_PAGESIZE);
+        total_memory = (double)pagesize * (double)sysconf(_SC_PHYS_PAGES) / (1024.0 * 1024.0); 
+        available_memory = (double)pagesize * (double)sysconf(_SC_AVPHYS_PAGES) / (1024.0 * 1024.0); 
 
         printf("%*s: VERSION %d.%d.%d\n", str_width, "SCOTT'S PROJECT EULER SOFTWARE", MAIN_VERSION, HIGHEST_PROBLEM_COMPLETED, SUB_VERSION);
         printf("%*s: %s\n", str_width, "processor model info", cpu_info);
