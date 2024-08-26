@@ -8,6 +8,7 @@ LDFLAGS=
 LDFLAGS_DEFAULT=-pthread -lgmp -lm -lprimesieve
 CLI_CONSTS=-DDEFAULT
 CLI_CONSTS_DEFAULT=-D_GNU_SOURCE
+INC_FLAGS_EXTRA=
 
 # Find all the files we want to compile, without folder names
 BASE_SRCS := $(wildcard $(SRC_DIR)/*.c) 
@@ -19,7 +20,7 @@ PROBLEM_OBJS := $(patsubst $(SRC_DIR)/problems/%.c,$(BUILD_DIR)/problems/%.o,$(P
 OBJS := $(BASE_OBJS) $(PROBLEM_OBJS)
 
 # Add a prefix to INC_DIRS
-INC_FLAGS := $(addprefix -I,$(INC_DIRS)) -I/usr/local/include
+INC_FLAGS := $(addprefix -I,$(INC_DIRS)) -I/usr/local/include $(INC_FLAGS_EXTRA)
 
 # Compiler flags
 CFLAGS := $(INC_FLAGS) -Wall -Wextra -g -pthread $(CLI_CONSTS) $(CLI_CONSTS_DEFAULT)
