@@ -27,6 +27,7 @@ _Bool numeric = true; //true by default, option sets false
 _Bool natural_language = false;
 _Bool problem_statement = false;
 _Bool tabulated = false;
+_Bool system_info = true;
 
 /* array of problem function pointers */
 int (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (problem_solution * ps) = {
@@ -50,7 +51,8 @@ int (*problem_func_ptrs[HIGHEST_PROBLEM_COMPLETED]) (problem_solution * ps) = {
     problem_018,
     problem_019,
     problem_020,
-    problem_021
+    problem_021,
+    problem_022
 };
 
 problem_solution solution_arr[HIGHEST_PROBLEM_COMPLETED];
@@ -72,7 +74,9 @@ static error_t project_euler_parser(int key, char * arg,
 
 static struct argp_option options[] = {
         {NULL, 0, NULL, 0,
-            "Tabulation Option Flags:", 0},
+            "General Formatting Option Flags:", 0},
+        {"no-system-info", (int)('i'), NULL, 0,
+            "disables system info output", 0},
         {"tabulated", (int)('z'), NULL, 0,
             "report solutions in a table", 0},
         {NULL, 0, NULL, 0,
@@ -124,6 +128,8 @@ static error_t project_euler_parser(int key, char * arg,
         problem_statement = true;
     if(key == ((int)('x')))
         natural_language = true;
+    if(key == ((int)('i')))
+        system_info = false;
     if(key == ((int)('z')))
         tabulated = true;
     if(key == ((int)('t')))
@@ -230,120 +236,123 @@ int main(int argc, char * argv[])
         return argp_ret;
     }
 
-    /* read processor info from lspcu */
-    char* cmd = "lscpu";
-    char* buffer = NULL;
-    char* bogomips = NULL;
-    char* bogomips_malloc = NULL;
-    char* cpu_info = NULL;
-    char* cpu_info_malloc = NULL;
-    char* max_mhz = NULL;
-    char* max_mhz_malloc = NULL;
-    const char delim = ':';
-    size_t line_len;
-    FILE* fp;
-
-    if ((fp = popen(cmd, "r")) == NULL) 
+    if(system_info)
     {
-        fprintf(stderr, "error opening 'lscpu' pipe, skipping\n");
-    }
-    else
-    {
+        /* read processor info from lspcu */
+        char* cmd = "lscpu";
+        char* buffer = NULL;
+        char* bogomips = NULL;
+        char* bogomips_malloc = NULL;
+        char* cpu_info = NULL;
+        char* cpu_info_malloc = NULL;
+        char* max_mhz = NULL;
+        char* max_mhz_malloc = NULL;
+        const char delim = ':';
+        size_t line_len;
+        FILE* fp;
 
-        while (getline(&buffer, &line_len, fp) != -1) 
+        if ((fp = popen(cmd, "r")) == NULL) 
         {
-            if(strstr(buffer, "Model name") != NULL)
+            fprintf(stderr, "error opening 'lscpu' pipe, skipping\n");
+        }
+        else
+        {
+
+            while (getline(&buffer, &line_len, fp) != -1) 
             {
-                cpu_info_malloc = strdup(buffer);
-                cpu_info = cpu_info_malloc;
-                strsep(&cpu_info, &delim); // ignoring return on purpose
-                while(cpu_info[0] == ' ')
-                    cpu_info++; // trim leading whitespace
-                i = 0;
-                while(cpu_info[i] != '\0')
+                if(strstr(buffer, "Model name") != NULL)
                 {
-                    if(cpu_info[i] == '\n')
+                    cpu_info_malloc = strdup(buffer);
+                    cpu_info = cpu_info_malloc;
+                    strsep(&cpu_info, &delim); // ignoring return on purpose
+                    while(cpu_info[0] == ' ')
+                        cpu_info++; // trim leading whitespace
+                    i = 0;
+                    while(cpu_info[i] != '\0')
                     {
-                        // null-terminate at the newline
-                        cpu_info[i] = '\0';
+                        if(cpu_info[i] == '\n')
+                        {
+                            // null-terminate at the newline
+                            cpu_info[i] = '\0';
+                        }
+                        i++;
                     }
-                    i++;
+                }
+                if(strstr(buffer, "CPU max MHz") != NULL)
+                {
+                    max_mhz_malloc = strdup(buffer);
+                    max_mhz = max_mhz_malloc;
+                    strsep(&max_mhz, &delim); // ignoring return on purpose
+                    while(max_mhz[0] == ' ')
+                        max_mhz++; // trim leading whitespace
+                    i = 0;
+                    while(max_mhz[i] != '\0')
+                    {
+                        if(max_mhz[i] == '\n')
+                        {
+                            // null-terminate at the newline
+                            max_mhz[i] = '\0';
+                        }
+                        i++;
+                    }
+                }
+                if(strstr(buffer, "BogoMIPS") != NULL)
+                {
+                    bogomips_malloc = strdup(buffer);
+                    bogomips = bogomips_malloc;
+                    strsep(&bogomips, &delim); // ignoring return on purpose
+                    while(bogomips[0] == ' ')
+                        bogomips++; // trim leading whitespace
+                    i = 0;
+                    while(bogomips[i] != '\0')
+                    {
+                        if(bogomips[i] == '\n')
+                        {
+                            // null-terminate at the newline
+                            bogomips[i] = '\0';
+                        }
+                        i++;
+                    }
                 }
             }
-            if(strstr(buffer, "CPU max MHz") != NULL)
+
+            if (pclose(fp)) 
             {
-                max_mhz_malloc = strdup(buffer);
-                max_mhz = max_mhz_malloc;
-                strsep(&max_mhz, &delim); // ignoring return on purpose
-                while(max_mhz[0] == ' ')
-                    max_mhz++; // trim leading whitespace
-                i = 0;
-                while(max_mhz[i] != '\0')
-                {
-                    if(max_mhz[i] == '\n')
-                    {
-                        // null-terminate at the newline
-                        max_mhz[i] = '\0';
-                    }
-                    i++;
-                }
-            }
-            if(strstr(buffer, "BogoMIPS") != NULL)
-            {
-                bogomips_malloc = strdup(buffer);
-                bogomips = bogomips_malloc;
-                strsep(&bogomips, &delim); // ignoring return on purpose
-                while(bogomips[0] == ' ')
-                    bogomips++; // trim leading whitespace
-                i = 0;
-                while(bogomips[i] != '\0')
-                {
-                    if(bogomips[i] == '\n')
-                    {
-                        // null-terminate at the newline
-                        bogomips[i] = '\0';
-                    }
-                    i++;
-                }
+                printf("Command not found or exited with error status\n");
+                return -1;
             }
         }
 
-        if (pclose(fp)) 
-        {
-            printf("Command not found or exited with error status\n");
-            return -1;
-        }
+        /* print some standard system information */
+        const int str_width = 35;
+        if((ret = clock_getres(CLOCK_MONOTONIC, &clock_res)) != 0)
+            perror("main.c: clock_getres():");
+        pagesize = getpagesize();
+        total_memory = (double)pagesize * (double)get_phys_pages() / (1024.0 * 1024.0); 
+        available_memory = (double)pagesize * (double)get_avphys_pages() / (1024.0 * 1024.0); 
+
+        printf("%*s: VERSION %d.%d.%d\n", str_width, "SCOTT'S PROJECT EULER SOFTWARE", MAIN_VERSION, HIGHEST_PROBLEM_COMPLETED, SUB_VERSION);
+        printf("%*s: %s\n", str_width, "processor model info", cpu_info);
+        printf("%*s: %s MHz\n", str_width, "processor max clock freq", max_mhz);
+        printf("%*s: %s MIPS\n", str_width, "BogoMIPS", bogomips);
+        printf("%*s: %ld\n", str_width, "number of configured processors", sysconf(_SC_NPROCESSORS_CONF));
+        printf("%*s: %ld\n", str_width, "number of available processors", sysconf(_SC_NPROCESSORS_ONLN));
+        printf("%*s: %ld\n", str_width, "CLOCKS_PER_SEC", (long int)CLOCKS_PER_SEC);
+        printf("%*s: %ld nanoseconds\n", str_width, "CLOCK_MONOTONIC resolution", clock_res.tv_nsec);
+        printf("%*s: %7.1f MB\n", str_width, "total memory", total_memory); 
+        printf("%*s: %7.1f MB\n", str_width, "available memory", available_memory);
+        printf("%*s: %d bytes\n", str_width, "page size", pagesize);
+        printf("\n");
+
+        // getline mallocd buffer, strdup mallocd cpu_info and max_mhz
+        free(buffer);
+        if(cpu_info_malloc != NULL)
+            free(cpu_info_malloc);
+        if(max_mhz_malloc != NULL)
+            free(max_mhz_malloc);
+        if(bogomips_malloc != NULL)
+            free(bogomips_malloc);
     }
-
-    /* print some standard system information */
-    const int str_width = 35;
-    if((ret = clock_getres(CLOCK_MONOTONIC, &clock_res)) != 0)
-        perror("main.c: clock_getres():");
-    pagesize = getpagesize();
-    total_memory = (double)pagesize * (double)get_phys_pages() / (1024.0 * 1024.0); 
-    available_memory = (double)pagesize * (double)get_avphys_pages() / (1024.0 * 1024.0); 
-
-    printf("%*s: VERSION %d.%d.%d\n", str_width, "SCOTT'S PROJECT EULER SOFTWARE", MAIN_VERSION, HIGHEST_PROBLEM_COMPLETED, SUB_VERSION);
-    printf("%*s: %s\n", str_width, "processor model info", cpu_info);
-    printf("%*s: %s MHz\n", str_width, "processor max clock freq", max_mhz);
-    printf("%*s: %s MIPS\n", str_width, "BogoMIPS", bogomips);
-    printf("%*s: %ld\n", str_width, "number of configured processors", sysconf(_SC_NPROCESSORS_CONF));
-    printf("%*s: %ld\n", str_width, "number of available processors", sysconf(_SC_NPROCESSORS_ONLN));
-    printf("%*s: %ld\n", str_width, "CLOCKS_PER_SEC", (long int)CLOCKS_PER_SEC);
-    printf("%*s: %ld nanoseconds\n", str_width, "CLOCK_MONOTONIC resolution", clock_res.tv_nsec);
-    printf("%*s: %7.1f MB\n", str_width, "total memory", total_memory); 
-    printf("%*s: %7.1f MB\n", str_width, "available memory", available_memory);
-    printf("%*s: %d bytes\n", str_width, "page size", pagesize);
-    printf("\n");
-
-    // getline mallocd buffer, strdup mallocd cpu_info and max_mhz
-    free(buffer);
-    if(cpu_info_malloc != NULL)
-        free(cpu_info_malloc);
-    if(max_mhz_malloc != NULL)
-        free(max_mhz_malloc);
-    if(bogomips_malloc != NULL)
-        free(bogomips_malloc);
     /* run each problem indicated by program options */
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
     {

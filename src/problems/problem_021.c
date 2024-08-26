@@ -31,7 +31,7 @@ int problem_021(problem_solution *ps)
     char buf[PE_SOLUTION_BUFFER_LEN];
     int ret;
 
-    // TODO: ps->problem_number = 021U;
+    ps->problem_number = 21U;
     ps->problem_statement = strdup("Evaluate the sum of amicable numbers under 10,000");
 
     /* start timing */
