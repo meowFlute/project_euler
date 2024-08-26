@@ -4,11 +4,10 @@ TARGET_EXEC=project_euler
 BUILD_DIR=./build
 SRC_DIR=./src
 INC_DIRS := $(SRC_DIR) $(SRC_DIR)/problems
-LDFLAGS := -pthread -lgmp -lm -lprimesieve
-ifndef CLI_CONSTS
+LDFLAGS=
+LDFLAGS_DEFAULT=-pthread -lgmp -lm -lprimesieve
 CLI_CONSTS=-DDEFAULT
-endif
-CLI_CONSTS+=-D_GNU_SOURCE
+CLI_CONSTS_DEFAULT=-D_GNU_SOURCE
 
 # Find all the files we want to compile, without folder names
 BASE_SRCS := $(wildcard $(SRC_DIR)/*.c) 
@@ -23,7 +22,7 @@ OBJS := $(BASE_OBJS) $(PROBLEM_OBJS)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS)) -I/usr/local/include
 
 # Compiler flags
-CFLAGS := $(INC_FLAGS) -Wall -Wextra -pedantic -Werror -g -pthread $(CLI_CONSTS)
+CFLAGS := $(INC_FLAGS) -Wall -Wextra -g -pthread $(CLI_CONSTS) $(CLI_CONSTS_DEFAULT)
 
 # make all will also run the compiledb and ctags commands
 all: post_build
@@ -33,7 +32,7 @@ minimal: $(TARGET_EXEC)
 
 # The final build step.
 $(TARGET_EXEC): build_dir $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LDFLAGS_DEFAULT)
 
 build_dir:
 	mkdir -p $(BUILD_DIR)
