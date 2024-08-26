@@ -7,24 +7,32 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  linux_gcc:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install GMP
-      run: sudo apt install libgmp-dev
-
-    - name: Install libprimesieve
-      run: sudo apt install libprimesieve-dev
-
+    - name: install dependencies
+      run: |
+          sudo apt update
+          sudo apt install libgmp-dev libprimesieve-dev
     - name: Clean
       run: make clean
-
     - name: Run make without the ctags generation and stuff
-      run: make minimal
-
+      run: make minimal CC=gcc
+    - name: Run ./project_euler
+      run: ./project_euler -ztc --all
+  
+  linux_clang:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: install dependencies
+      run: |
+          sudo apt update
+          sudo apt install libgmp-dev libprimesieve-dev
+    - name: make clean
+      run: make clean
+    - name: make minimal CC=clang
+      run: make minimal CC=clang
     - name: Run ./project_euler
       run: ./project_euler -ztc --all
