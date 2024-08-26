@@ -52,4 +52,6 @@ jobs:
     - name: make minimal CC=clang
       run: make minimal CC=clang LDFLAGS="-L/opt/homebrew/lib -largp" INC_FLAGS_EXTRA="-I/opt/homebrew/include"
     - name: run ./project_euler
-      run: ./project_euler -ztc --all
+      run: |
+          ./project_euler -?
+          ./project_euler -tcxs --all          
