@@ -23,7 +23,7 @@ OBJS := $(BASE_OBJS) $(PROBLEM_OBJS)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS)) -I/usr/local/include
 
 # Compiler flags
-CFLAGS := $(INC_FLAGS) -Wall -Wextra -pedantic -Werror -g -pthread $(CLI_CONSTS)
+CFLAGS := $(INC_FLAGS) -Wall -Wextra -g -pthread $(CLI_CONSTS)
 
 # make all will also run the compiledb and ctags commands
 all: post_build
