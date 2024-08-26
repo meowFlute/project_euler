@@ -15,11 +15,11 @@ jobs:
       run: |
           sudo apt update
           sudo apt install libgmp-dev libprimesieve-dev
-    - name: Clean
+    - name: make clean
       run: make clean
-    - name: Run make without the ctags generation and stuff
+    - name: make minimal CC=gcc
       run: make minimal CC=gcc
-    - name: Run ./project_euler
+    - name: run ./project_euler
       run: ./project_euler -ztc --all
   
   linux_clang:
@@ -34,5 +34,21 @@ jobs:
       run: make clean
     - name: make minimal CC=clang
       run: make minimal CC=clang
-    - name: Run ./project_euler
+    - name: run ./project_euler
+      run: ./project_euler -ztc --all
+
+  macos_clang:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: install dependencies
+      run: |
+          brew install make
+          brew install gmp
+          brew install primesieve
+    - name: make clean
+      run: make clean
+    - name: make minimal CC=clang
+      run: make minimal CC=clang
+    - name: run ./project_euler
       run: ./project_euler -ztc --all
