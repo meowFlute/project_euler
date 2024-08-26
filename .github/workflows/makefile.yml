@@ -50,6 +50,6 @@ jobs:
     - name: make clean
       run: make clean
     - name: make minimal CC=clang
-      run: make minimal CC=clang
+      run: make minimal CC=clang LDFLAGS="-L/opt/homebrew/lib -largp"
     - name: run ./project_euler
       run: ./project_euler -ztc --all
