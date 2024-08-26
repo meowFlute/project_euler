@@ -44,7 +44,7 @@ int count_first_sundays(int* out, int start_month, int start_year,
 {
     int y, m, ret;
     char buf[128];
-    struct tm date_tm;
+    struct tm* date_tm_p;
     int sum = 0;
 
     if((start_month < 1) || (start_month > 12))
@@ -77,9 +77,9 @@ int count_first_sundays(int* out, int start_month, int start_year,
             ret = snprintf(buf, sizeof buf, "Sun %d %d", m, y);
             if((ret >= (int)(sizeof buf)) || (ret < 0))
                 fprintf(stderr, "problem 019: snprintf of date returned bad value ret=%d\n", ret);
-            if((ret = getdate_r(buf, &date_tm)) != 0)
+            if((date_tm_p = getdate(buf)) == NULL)
                 return getdate_error_str(ret);
-            if(date_tm.tm_mday == 1)
+            if(date_tm_p->tm_mday == 1)
                 sum++;
         }
     }
