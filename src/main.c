@@ -4,7 +4,6 @@
 #include <stdlib.h>     // EXIT_SUCCESS
 #include <string.h>     // strtok
 #include <errno.h>      // errno
-#include <error.h>      // error
 #include <unistd.h>     // sysconf
 #include <inttypes.h>   // uint64_t and PRIu64
 #include <sys/sysinfo.h> // get_phys_pages
@@ -160,7 +159,10 @@ static error_t project_euler_parser(int key, char * arg,
         /* strdup uses malloc, arg_malloc must be freed later */
         char * arg_malloc = strdup(arg);
         if(arg_malloc == NULL)
-            error(EXIT_FAILURE, errno, "arg_copy malloc failed");
+        {
+            fprintf(stderr, "arg_copy malloc failed, errno=%d: %s\n", errno, strerror(errno));
+            return EXIT_FAILURE;
+        }
         /* strsep will set the pointer to null without freeing, so we pass it a
          * copy and retain the original to free later */
         char * arg_copy = arg_malloc; 
@@ -187,7 +189,10 @@ static error_t project_euler_parser(int key, char * arg,
         /* strdup uses malloc, arg_malloc must be freed later */
         char * arg_malloc = strdup(arg);
         if(arg_malloc == NULL)
-            error(EXIT_FAILURE, errno, "arg_copy malloc failed");
+        {
+            fprintf(stderr, "arg_copy malloc failed, errno=%d: %s\n", errno, strerror(errno));
+            return EXIT_FAILURE;
+        }
         /* strsep will set the pointer to null without freeing, so we pass it a
          * copy and retain the original to free later */
         char * arg_copy = arg_malloc; 
