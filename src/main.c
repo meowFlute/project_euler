@@ -240,6 +240,7 @@ int main(int argc, char * argv[])
         return argp_ret;
     }
 
+#ifdef __linux__
     if(system_info)
     {
         /* read processor info from lspcu */
@@ -357,6 +358,7 @@ int main(int argc, char * argv[])
         if(bogomips_malloc != NULL)
             free(bogomips_malloc);
     }
+#endif
     /* run each problem indicated by program options */
     for(i = 0; i < HIGHEST_PROBLEM_COMPLETED; i++)
     {
